@@ -11,7 +11,7 @@ calc_exchange(int atom, int index_temp[4], int num_orb, int num_kpoints, int n_m
               std::vector < std::vector < std::vector < double >>>  &egval,
 std::vector < std::vector < std::vector < std::vector < std::complex<double> >> >> &egvec,
 std::vector<std::complex<double>> &E, std::vector<std::complex<double>> &dE,
-std::vector < std::vector < std::vector < std::vector < std::vector < std::vector < double > > >> >> Ham_R, double exchange[5][5]) {
+std::vector < std::vector < std::vector < std::vector < std::vector < std::vector < double > > >> >> &Ham_R, double exchange[5][5]) {
 
 
     int i, j, x, y, z, num, e, zone;
