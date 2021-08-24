@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-std=c++11 -c -Wall -O2 -I/opt/local/include  
 LDFLAGS= -llapack
-SOURCES= xchange.cpp calc_exchange.cpp calc_occupation.cpp coordination_sort.cpp 
+SOURCES= main.cpp calc_exchange.cpp calc_occupation.cpp coordination_sort.cpp 
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE= xchange.x
 
