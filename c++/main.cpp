@@ -16,7 +16,7 @@ int main() {
     int num_mag_atoms, num_orb, num_orb2, num_kpoints, num_points;
     int n_size[3], n_min[3], n_max[3], vecs[3], orbs[2], kmesh[3], specific[5], index_temp[4];
 
-    double spin, vol, weight, ca, sa, matrix_trace, rad_specific;
+    double spin, vol, ca, sa, matrix_trace, rad_specific;
     double cell_vec[3][3], rec_vec[3][3], ham_values[2], r[3];
     double exchange[5][5], occ[2][5][5], mag_mom[5][5];
 
@@ -162,7 +162,6 @@ int main() {
 
 
     num_kpoints = kmesh[0]*kmesh[1]*kmesh[2];
-    weight = pow(num_kpoints, -1);
 
     i = 0;
     for (auto &element : json_file["cell_vectors"]) {

@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <numeric>
-
+#include <algorithm>
 
 template<typename T>
 std::vector <size_t> sort_indexes(const std::vector <T> &v) {
