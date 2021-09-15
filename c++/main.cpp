@@ -388,12 +388,16 @@ int main()
 
     if (specific_true)
     {
-        std::cout << std::endl
-                  << "WARNING! Exchange coupling will be calculated only between Atom " << specific[0]
+        std::cout << std::endl << "Exchange coupling will be calculated only between Atom " << specific[0]
                   << "(000)<-->Atom " << specific[1] << "(" << specific[2] << specific[3] << specific[4]
                   << ")." << std::endl; 
         std::cout << "To calculate exchange couplings between all atoms set <exchange_for_specific_atoms>: [0, 0, 0, 0, 0] in <in.json> file"
                   << std::endl;
+    }
+    else
+    {
+        std::cout << std::endl << "Exchange couplings will be calculated between all atoms" <<std::endl;
+        std::cout <<"within coordination spheres smaller than # "<< max_sphere_num <<std::endl;
     }
 
     std::cout << "---------------------------------------------------------------------" << std::endl;
