@@ -1,17 +1,16 @@
 #include <complex>
 #include <iostream>
-#include <vector>
 
 
 
 //This function calculates exchange coupling parameter between atoms with index 'atom' and 'index_temp'
 void
 calc_exchange(int atom, int index_temp[4], int num_orb, int num_kpoints, int n_max[3],
-              int ntot, double spin, double cell_vec[3][3], std::vector <std::vector<double>> & k_vec,
-              std::vector < std::vector < std::vector < double >>>  &egval,
-std::vector < std::vector < std::vector < std::vector < std::complex<double> >> >> &egvec,
-std::vector<std::complex<double>> &E, std::vector<std::complex<double>> &dE,
-std::vector < std::vector < std::vector < std::vector < std::vector < std::vector < double > > >> >> &Ham_R, double exchange[5][5]) {
+              int ntot, double spin, double cell_vec[3][3], double **k_vec,
+              std::complex<double> ***egval,
+              std::complex<double> ****egvec,
+              std::complex<double> *E, std::complex<double> *dE,
+              double ******Ham_R, double exchange[5][5]) {
 
 
     int i, j, x, y, z, num, e, zone;

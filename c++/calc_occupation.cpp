@@ -1,14 +1,14 @@
 #include <complex>
 #include <iostream>
-#include <vector>
 
 
 //This function calculates occupation matrices for atom with index 'atom'
 void
 calc_occupation(int atom, int num_orb, int num_kpoints, int ntot,
-        std::vector <std::vector <std::vector <double> >> &egval,
-        std::vector <std::vector <std::vector<std::vector <std::complex<double> >> >> &egvec,
-        std::vector <std::complex<double>> &E, std::vector<std::complex<double>> &dE, double occ[2][5][5]) {
+                std::complex<double> ***egval,
+                std::complex<double> ****egvec,
+                std::complex<double> *E, std::complex<double> *dE,
+                double occ[2][5][5]) {
 
     int x, y, z, num, e, zone;
     double weight;
