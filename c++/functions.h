@@ -3,17 +3,19 @@
 #include <vector>
 
 
-// external lapack library for diagonalization
-extern "C"
-void zheev_(char *JOBZ, char *UPLO, int *N, std::complex<double> *A, int *LDA, double *W, std::complex<double> *WORK, int *LWORK,
-            double *RWORK, int *INFO);
-
-
 //This function sorts atoms depending on the radius from the central atom with index 'atom'
 void
 coordination_sort(int atom, int num_atoms, int n_min[3], int n_max[3], double cell_vectors[3][3],
                   std::vector <std::vector<double>> &positions,
                   std::vector<double> &radius, std::vector <std::vector<int>> &index) ;
+
+
+
+//This function calculates eigenvalues and eigenvectors of Ham_R at each k-point
+void 
+calc_eigenstates(int num_orb, int num_kpoints, int n_min[3], int n_max[3], double cell_vec[3][3], double **k_vec, 
+double ******Ham_R, std::complex<double> ***egval, std::complex<double> ****egvec, bool diag_error);
+
 
 
 //This function calculates occupation matrices for atom with index 'atom'

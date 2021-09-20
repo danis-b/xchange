@@ -12,14 +12,12 @@ int main()
 {
     time_t td;
     int i, j, k, x, y, z, e, p, atom, sphere_num, neighbor_num, max_sphere_num;
-    int num_mag_atoms, num_orb, num_orb2, num_kpoints, num_points;
+    int num_mag_atoms, num_orb, num_kpoints, num_points;
     int n_size[3], n_min[3], n_max[3], vecs[3], orbs[2], kmesh[3], specific[5], index_temp[4];
 
-    double spin, vol, ca, sa, matrix_trace, rad_specific;
+    double spin, vol, matrix_trace, rad_specific;
     double cell_vec[3][3], rec_vec[3][3], ham_values[2], r[3];
     double exchange[5][5], occ[2][5][5], mag_mom[5][5];
-
-    std::complex<double> phase;
 
     bool specific_true, diag_error;
 
@@ -192,17 +190,6 @@ int main()
         i++;
     }
 
-    // Hamiltonian in reciprocal space
-    std::complex<double> ***Ham_K = new std::complex<double> **[2];
-    for (z = 0; z < 2; z++)
-    {
-        Ham_K[z] = new std::complex<double> *[num_orb];
-        for (i = 0; i < num_orb; i++)
-        {
-            Ham_K[z][i] = new std::complex<double>[num_orb];
-        }
-    }
-
     // Eigenvectors in reciprocal space
     std::complex<double> ****egvec = new std::complex<double> ***[2];
     for (z = 0; z < 2; z++)
@@ -258,25 +245,6 @@ int main()
     std::cout << "File spin_dn.dat was  scanned  successfully" << std::endl;
 
     dn.close();
-
-    //===============================================================================
-    //lapack settings
-
-    char JOBZ = 'V';
-    char UPLO = 'U';
-    int LWORK = 2 * num_orb;
-
-    num_orb2 = num_orb * num_orb;
-
-    double *W_up = new double[num_orb];
-    double *W_dn = new double[num_orb];
-
-    std::complex<double> *h_up = new std::complex<double>[num_orb2];
-    std::complex<double> *h_dn = new std::complex<double>[num_orb2];
-
-    std::complex<double> *WORK = new std::complex<double>[LWORK];
-    double *RWORK = new double[3 * num_orb];
-    int INFO_up, INFO_dn;
 
     //===============================================================================
     // reciprocal vectors and and kmesh for integration
@@ -407,99 +375,15 @@ int main()
 
     diag_error = false;
 
-    for (e = 0; e < num_kpoints; e++)
-    {
-
-        for (x = 0; x < num_orb; x++)
-        {
-            for (y = 0; y < num_orb; y++)
-            {
-                for (z = 0; z < 2; z++)
-                {
-                    Ham_K[z][x][y] = std::complex<double>(0, 0);
-                }
-            }
-        }
-
-        for (x = 0; x < num_orb; x++)
-        {
-            for (y = 0; y < num_orb; y++)
-            {
-                for (z = 0; z < 2; z++)
-                {
-
-                    for (i = n_min[0]; i <= n_max[0]; i++)
-                    {
-                        for (j = n_min[1]; j <= n_max[1]; j++)
-                        {
-                            for (k = n_min[2]; k <= n_max[2]; k++)
-                            {
-                                for (p = 0; p < 3; p++)
-                                {
-                                    r[p] = i * cell_vec[0][p] + j * cell_vec[1][p] + k * cell_vec[2][p];
-                                }
-
-                                ca = cos(k_vec[e][0] * r[0] + k_vec[e][1] * r[1] + k_vec[e][2] * r[2]);
-                                sa = sin(k_vec[e][0] * r[0] + k_vec[e][1] * r[1] + k_vec[e][2] * r[2]);
-
-                                phase = std::complex<double>(ca, -sa);
-
-                                Ham_K[z][x][y] +=
-                                    phase * std::complex<double>(Ham_R[z][i - n_min[0]][j - n_min[1]][k -
-                                                                                                      n_min[2]][x][y],
-                                                                 0); //hamiltonian k-space
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        for (x = 0; x < num_orb; x++)
-        {
-            for (y = 0; y < num_orb; y++)
-            {
-                h_up[x * num_orb + y] = Ham_K[0][x][y];
-                h_dn[x * num_orb + y] = Ham_K[1][x][y];
-            }
-        }
-
-        zheev_(&JOBZ, &UPLO, &num_orb, h_up, &num_orb, W_up, WORK, &LWORK, RWORK, &INFO_up);
-        zheev_(&JOBZ, &UPLO, &num_orb, h_dn, &num_orb, W_dn, WORK, &LWORK, RWORK, &INFO_dn);
-
-        if (INFO_up != 0 || INFO_dn != 0){
-            diag_error = true;
-            break;
-        }
-
-        for (x = 0; x < num_orb; x++)
-        {
-            egval[0][e][x] = W_up[x];
-            egval[1][e][x] = W_dn[x];
-
-            for (y = 0; y < num_orb; y++)
-            {
-                egvec[0][e][y][x] = h_up[x * num_orb + y];
-                egvec[1][e][y][x] = h_dn[x * num_orb + y];
-            }
-        }
-
-    }
+    calc_eigenstates(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, Ham_R, egval, egvec, diag_error);
 
     if (diag_error)
     {
         std::cout << "ERROR! Problem with diagonalization! Please, check the input parameters and Hamiltonian!"
                   << std::endl;
-        return 0;
-    }
+    return 0;              
 
-    delete[] h_up;
-    delete[] h_dn;
-    delete[] W_up;
-    delete[] W_dn;
-    delete[] WORK;
-    delete[] RWORK;
-    delete[] Ham_K;
+    }
 
     std::cout << "Fourier transformation and diagonalization of Hamiltonian is completed" << std::endl;
 
