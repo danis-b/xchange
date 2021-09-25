@@ -17,7 +17,6 @@ int main()
 
     double spin, vol, matrix_trace, rad_specific;
     double cell_vec[3][3], rec_vec[3][3], ham_values[2], r[3];
-    double exchange[5][5], occ[2][5][5], mag_mom[5][5];
 
     bool specific_true, diag_error;
 
@@ -58,8 +57,8 @@ int main()
     {
         up >> vecs[0] >> vecs[1] >> vecs[2] >> orbs[0] >> orbs[1] >> ham_values[0] >> ham_values[1];
 
-        if(orbs[0] > num_orb) 
-        num_orb = orbs[0];
+        if (orbs[0] > num_orb)
+            num_orb = orbs[0];
 
         for (i = 0; i < 3; i++)
         {
@@ -104,28 +103,7 @@ int main()
         num_mag_atoms, std::vector<double>(
                            3));
 
-    // Hamiltonian in real space
-    double ******Ham_R = new double *****[2];
-    for (i = 0; i < 2; i++)
-    {
-        Ham_R[i] = new double ****[n_size[0]];
-        for (j = 0; j < n_size[0]; j++)
-        {
-            Ham_R[i][j] = new double ***[n_size[1]];
-            for (k = 0; k < n_size[1]; k++)
-            {
-                Ham_R[i][j][k] = new double **[n_size[2]];
-                for (x = 0; x < n_size[2]; x++)
-                {
-                    Ham_R[i][j][k][x] = new double *[num_orb];
-                    for (y = 0; y < num_orb; y++)
-                    {
-                        Ham_R[i][j][k][x][y] = new double[num_orb];
-                    }
-                }
-            }
-        }
-    }
+    std::vector<int> mag_orbs(num_mag_atoms);
 
     // read matrices from json file
 
@@ -133,6 +111,13 @@ int main()
     for (auto &element : json_file["kmesh"])
     {
         kmesh[i] = element;
+        i++;
+    }
+
+    i = 0;
+    for (auto &element : json_file["orbitals_of_magnetic_atoms"])
+    {
+        mag_orbs[i] = element;
         i++;
     }
 
@@ -188,6 +173,29 @@ int main()
             j++;
         }
         i++;
+    }
+
+    // Hamiltonian in real space
+    double ******Ham_R = new double *****[2];
+    for (i = 0; i < 2; i++)
+    {
+        Ham_R[i] = new double ****[n_size[0]];
+        for (j = 0; j < n_size[0]; j++)
+        {
+            Ham_R[i][j] = new double ***[n_size[1]];
+            for (k = 0; k < n_size[1]; k++)
+            {
+                Ham_R[i][j][k] = new double **[n_size[2]];
+                for (x = 0; x < n_size[2]; x++)
+                {
+                    Ham_R[i][j][k][x] = new double *[num_orb];
+                    for (y = 0; y < num_orb; y++)
+                    {
+                        Ham_R[i][j][k][x][y] = new double[num_orb];
+                    }
+                }
+            }
+        }
     }
 
     // Eigenvectors in reciprocal space
@@ -347,25 +355,29 @@ int main()
     }
 
     std::cout << std::endl
-              << "atomic positions" << std::endl;
+              << "atomic positions"
+              << "\t"
+              << "orbitals" << std::endl;
     for (i = 0; i < num_mag_atoms; i++)
     {
-        std::cout << std::showpoint << positions[i][0] << "   " << positions[i][1] << "   " << positions[i][2]
+        std::cout << std::showpoint << positions[i][0] << "   " << positions[i][1] << "   " << positions[i][2] << "\t" << mag_orbs[i]
                   << std::endl;
     }
 
     if (specific_true)
     {
-        std::cout << std::endl << "Exchange coupling will be calculated only between Atom " << specific[0]
+        std::cout << std::endl
+                  << "Exchange coupling will be calculated only between Atom " << specific[0]
                   << "(000)<-->Atom " << specific[1] << "(" << specific[2] << specific[3] << specific[4]
-                  << ")." << std::endl; 
+                  << ")." << std::endl;
         std::cout << "To calculate exchange couplings between all atoms set <exchange_for_specific_atoms>: [0, 0, 0, 0, 0] in <in.json> file"
                   << std::endl;
     }
     else
     {
-        std::cout << std::endl << "Exchange couplings will be calculated between all atoms" <<std::endl;
-        std::cout <<"within coordination spheres smaller than # "<< max_sphere_num <<std::endl;
+        std::cout << std::endl
+                  << "Exchange couplings will be calculated between all atoms" << std::endl;
+        std::cout << "within coordination spheres smaller than # " << max_sphere_num << std::endl;
     }
 
     std::cout << "---------------------------------------------------------------------" << std::endl;
@@ -381,8 +393,7 @@ int main()
     {
         std::cout << "ERROR! Problem with diagonalization! Please, check the input parameters and Hamiltonian!"
                   << std::endl;
-    return 0;              
-
+        return 0;
     }
 
     std::cout << "Fourier transformation and diagonalization of Hamiltonian is completed" << std::endl;
@@ -392,22 +403,17 @@ int main()
 
     if (specific_true)
     {
-
-        matrix_trace = 0;
-
-        for (x = 0; x < 5; x++)
-        {
-            for (y = 0; y < 5; y++)
-            {
-                exchange[x][y] = 0;
-            }
-        }
-
         atom = specific[0];          //atom 1
         index_temp[0] = specific[2]; // i
         index_temp[1] = specific[3]; // j
         index_temp[2] = specific[4]; // k
         index_temp[3] = specific[1]; //atom 2
+
+        matrix_trace = 0;
+
+        std::vector<std::vector<double> > exchange(
+            mag_orbs[atom], std::vector<double>(
+                                mag_orbs[atom]));
 
         for (x = 0; x < 3; x++)
         {
@@ -422,18 +428,18 @@ int main()
                   << specific[4] << ") with radius " << rad_specific << std::endl;
 
         calc_exchange(atom, index_temp, num_orb, num_kpoints, n_max, ntot, spin, cell_vec, k_vec, egval, egvec, E, dE,
-                      Ham_R, exchange);
+                      Ham_R, mag_orbs, exchange);
 
-        for (x = 0; x < 5; x++)
+        for (x = 0; x < mag_orbs[atom]; x++)
         {
             matrix_trace += exchange[x][x];
         }
 
         std::cout << std::fixed;
 
-        for (x = 0; x < 5; x++)
+        for (x = 0; x < mag_orbs[atom]; x++)
         {
-            for (y = 0; y < 5; y++)
+            for (y = 0; y < mag_orbs[atom]; y++)
             {
                 std::cout << std::setprecision(6) << exchange[x][y] << " ";
             }
@@ -459,6 +465,15 @@ int main()
         for (atom = 0; atom < num_mag_atoms; atom++)
         {
 
+            std::vector<std::vector<std::vector<double> > > occ(
+                2, std::vector<std::vector<double> >(
+                       mag_orbs[atom], std::vector<double>(
+                                           mag_orbs[atom])));
+
+            std::vector<std::vector<double> > exchange(
+                mag_orbs[atom], std::vector<double>(
+                                    mag_orbs[atom]));
+
             coordination_sort(atom, num_mag_atoms, n_min, n_max, cell_vec, positions, radius, index);
 
             std::cout << "=====================================================================" << std::endl;
@@ -472,30 +487,22 @@ int main()
                 if (p == 0)
                 {
                     //in case of radius = 0 we calculate occupation matrices
-                    calc_occupation(atom, num_orb, num_kpoints, ntot, egval, egvec, E, dE, occ);
+                    calc_occupation(atom, num_orb, num_kpoints, ntot, egval, egvec, E, dE, mag_orbs, occ);
 
                     matrix_trace = 0;
 
-                    for (x = 0; x < 5; x++)
+                    for (x = 0; x < mag_orbs[atom]; x++)
                     {
-                        for (y = 0; y < 5; y++)
-                        {
-                            mag_mom[x][y] = occ[0][x][y] - occ[1][x][y];
-                        }
+                        matrix_trace += (occ[0][x][x] - occ[1][x][x]);
                     }
 
-                    for (x = 0; x < 5; x++)
-                    {
-                        matrix_trace += mag_mom[x][x];
-                    }
-
-                    std::cout << "Occupation matrix (N_up - N_dn) for atom " << atom + 1 << std::endl;
+                    std::cout << "Occupation matrix (N_up - N_dn) for atom " << atom << std::endl;
                     std::cout << std::fixed;
-                    for (x = 0; x < 5; x++)
+                    for (x = 0; x < mag_orbs[atom]; x++)
                     {
-                        for (y = 0; y < 5; y++)
+                        for (y = 0; y < mag_orbs[atom]; y++)
                         {
-                            std::cout << std::setprecision(3) << mag_mom[x][y] << " ";
+                            std::cout << std::setprecision(3) << occ[0][x][y] - occ[1][x][y] << " ";
                         }
                         std::cout << std::endl;
                     }
@@ -530,27 +537,27 @@ int main()
 
                     matrix_trace = 0;
 
-                    for (x = 0; x < 5; x++)
+                    for (x = 0; x < mag_orbs[atom]; x++)
                     {
-                        for (y = 0; y < 5; y++)
+                        for (y = 0; y < mag_orbs[atom]; y++)
                         {
                             exchange[x][y] = 0;
                         }
                     }
 
                     calc_exchange(atom, index_temp, num_orb, num_kpoints, n_max, ntot, spin, cell_vec, k_vec, egval,
-                                  egvec, E, dE, Ham_R, exchange);
+                                  egvec, E, dE, Ham_R, mag_orbs, exchange);
 
-                    for (x = 0; x < 5; x++)
+                    for (x = 0; x < mag_orbs[atom]; x++)
                     {
                         matrix_trace += exchange[x][x];
                     }
 
                     std::cout << std::fixed;
 
-                    for (x = 0; x < 5; x++)
+                    for (x = 0; x < mag_orbs[atom]; x++)
                     {
-                        for (y = 0; y < 5; y++)
+                        for (y = 0; y < mag_orbs[atom]; y++)
                         {
                             std::cout << std::setprecision(6) << exchange[x][y] << " ";
                         }

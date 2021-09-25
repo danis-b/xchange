@@ -19,22 +19,20 @@ double ******Ham_R, std::complex<double> ***egval, std::complex<double> ****egve
 
 
 //This function calculates occupation matrices for atom with index 'atom'
-void
-calc_occupation(int atom, int num_orb, int num_kpoints, int ntot,
-                std::complex<double> ***egval,
-                std::complex<double> ****egvec,
-                std::complex<double> *E, std::complex<double> *dE,
-                double occ[2][5][5]);
+void calc_occupation(int atom, int num_orb, int num_kpoints, int ntot,
+                     std::complex<double> ***egval,
+                     std::complex<double> ****egvec,
+                     std::complex<double> *E, std::complex<double> *dE, std::vector<int> &mag_orbs,
+                     std::vector<std::vector<std::vector<double> > > &occ);
 
 
 //This function calculates exchange coupling parameter between atoms with index 'atom' and 'index_temp'
-void
-calc_exchange(int atom, int index_temp[4], int num_orb, int num_kpoints, int n_max[3],
-              int ntot, double spin, double cell_vec[3][3], double **k_vec,
-              std::complex<double> ***egval,
-              std::complex<double> ****egvec,
-              std::complex<double> *E, std::complex<double> *dE,
-              double ******Ham_R, double exchange[5][5]);
+void calc_exchange(int atom, int index_temp[4], int num_orb, int num_kpoints, int n_max[3],
+                   int ntot, double spin, double cell_vec[3][3], double **k_vec,
+                   std::complex<double> ***egval,
+                   std::complex<double> ****egvec,
+                   std::complex<double> *E, std::complex<double> *dE,
+                   double ******Ham_R, std::vector<int> &mag_orbs, std::vector<std::vector<double> > &exchange);
 
 
 
