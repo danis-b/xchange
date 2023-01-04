@@ -23,13 +23,13 @@ void coordination_sort(int central_atom, int num_atoms, int n_min[3], int n_max[
                        std::vector<double> &radius, std::vector<std::vector<int>> &index)
 {
 
-    int i, j, k, x, y, z;
+    int i, j, k, atom2;
     int num_points;
 
     int n_size[3];
     double r[3];
 
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 3; ++i)
     {
         n_size[i] = n_max[i] - n_min[i] + 1; // Plus 1 for 0th
     }
@@ -47,25 +47,25 @@ void coordination_sort(int central_atom, int num_atoms, int n_min[3], int n_max[
     i = n_min[0];
     j = n_min[1];
     k = n_min[2];
-    x = 0;
-    for (z = 0; z < num_points; z++)
+    atom2 = 0;
+    for (int z = 0; z < num_points; ++z)
     {
         idx[z][0] = i;
         idx[z][1] = j;
         idx[z][2] = k;
-        idx[z][3] = x;
+        idx[z][3] = atom2;
 
-        for (y = 0; y < 3; y++)
+        for (int y = 0; y < 3; ++y)
         {
             r[y] = i * cell_vectors[0][y] + j * cell_vectors[1][y] + k * cell_vectors[2][y] +
-                   (positions[x][y] - positions[central_atom][y]);
+                   (positions[atom2][y] - positions[central_atom][y]);
         }
 
         rad[z] = sqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
-        x++;
-        if (x == num_atoms)
+        atom2++;
+        if (atom2 == num_atoms)
         {
-            x = 0;
+            atom2 = 0;
             k++;
             if (k == n_max[2] + 1)
             {

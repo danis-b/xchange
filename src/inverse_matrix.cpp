@@ -17,9 +17,9 @@ void inverse_matrix(int num_orb, std::complex<double> ***loc_greenK, bool err)
     std::complex<double> *h_up = new std::complex<double>[num_orb * num_orb];
     std::complex<double> *h_dn = new std::complex<double>[num_orb * num_orb];
 
-    for (int x = 0; x < num_orb; x++)
+    for (int x = 0; x < num_orb; ++x)
     {
-        for (int y = 0; y < num_orb; y++)
+        for (int y = 0; y < num_orb; ++y)
         {
             h_up[x * num_orb + y] = loc_greenK[0][x][y];
             h_dn[x * num_orb + y] = loc_greenK[1][x][y];
@@ -37,9 +37,9 @@ void inverse_matrix(int num_orb, std::complex<double> ***loc_greenK, bool err)
         err = true;
     }
 
-    for (int x = 0; x < num_orb; x++)
+    for (int x = 0; x < num_orb; ++x)
     {
-        for (int y = 0; y < num_orb; y++)
+        for (int y = 0; y < num_orb; ++y)
         {
             loc_greenK[0][x][y] = h_up[x * num_orb + y];
             loc_greenK[1][x][y] = h_dn[x * num_orb + y];

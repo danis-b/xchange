@@ -11,7 +11,9 @@ using json = nlohmann::json;
 int main()
 {
     time_t td;
-    int i, j, k, x, y, z, e, p, central_atom, sphere_num, neighbor_num, max_sphere_num;
+    int idx, idx_x, idx_y;
+
+    int central_atom, sphere_num, neighbor_num, max_sphere_num;
     int num_mag_atoms, num_orb, num_kpoints, num_points;
     int n_size[3], n_min[3], n_max[3], vecs[3], orbs[2], kmesh[3], specific[4], index_temp[4];
 
@@ -21,7 +23,7 @@ int main()
     bool specific_true, err;
 
     // integration parameters
-    int ncol, nrow, ntot, num;
+    int ncol, nrow, ntot;
     double smearing, e_low, e_fermi;
     std::complex<double> de, e_const;
 
@@ -47,7 +49,7 @@ int main()
     }
 
     // define the possible ranges [n_min; n_max] and  num_orb from .dat files
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; ++i)
     {
         n_max[i] = n_min[i] = 0;
     }
@@ -60,7 +62,7 @@ int main()
         if (orbs[0] > num_orb)
             num_orb = orbs[0];
 
-        for (i = 0; i < 3; i++)
+        for (int i = 0; i < 3; ++i)
         {
             if (n_max[i] < vecs[i])
                 n_max[i] = vecs[i];
@@ -69,7 +71,7 @@ int main()
         }
     }
 
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; ++i)
     {
         n_size[i] = n_max[i] - n_min[i] + 1; // Plus 1 for 0th
     }
@@ -116,29 +118,29 @@ int main()
 
     // read matrices from json file
 
-    i = 0;
+    idx = 0;
     for (auto &element : json_file["kmesh"])
     {
-        kmesh[i] = element;
-        i++;
+        kmesh[idx] = element;
+        idx++;
     }
 
-    i = 0;
+    idx = 0;
     for (auto &element : json_file["orbitals_of_magnetic_atoms"])
     {
-        mag_orbs[i] = element;
-        i++;
+        mag_orbs[idx] = element;
+        idx++;
     }
 
-    i = 0;
+    idx = 0;
     for (auto &element : json_file["exchange_for_specific_atoms"])
     {
-        specific[i] = element;
-        i++;
+        specific[idx] = element;
+        idx++;
     }
 
     specific_true = false;
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; ++i)
     {
         if (specific[i] != 0)
         {
@@ -157,45 +159,45 @@ int main()
 
     num_kpoints = kmesh[0] * kmesh[1] * kmesh[2];
 
-    i = 0;
+    idx = 0;
     for (auto &element : json_file["cell_vectors"])
     {
-        j = 0;
+        int j = 0;
         for (auto &element1 : element)
         {
-            cell_vec[i][j] = element1;
+            cell_vec[idx][j] = element1;
             j++;
         }
-        i++;
+        idx++;
     }
 
-    i = 0;
+    idx = 0;
     for (auto &element : json_file["positions_of_magnetic_atoms"])
     {
-        j = 0;
+        int j = 0;
         for (auto &element1 : element)
         {
-            positions[i][j] = element1;
+            positions[idx][j] = element1;
             j++;
         }
-        i++;
+        idx++;
     }
 
     // Hamiltonian in real space
     double ******Ham_R = new double *****[2];
-    for (i = 0; i < 2; i++)
+    for (int i = 0; i < 2; ++i)
     {
         Ham_R[i] = new double ****[n_size[0]];
-        for (j = 0; j < n_size[0]; j++)
+        for (int j = 0; j < n_size[0]; ++j)
         {
             Ham_R[i][j] = new double ***[n_size[1]];
-            for (k = 0; k < n_size[1]; k++)
+            for (int k = 0; k < n_size[1]; ++k)
             {
                 Ham_R[i][j][k] = new double **[n_size[2]];
-                for (x = 0; x < n_size[2]; x++)
+                for (int x = 0; x < n_size[2]; ++x)
                 {
                     Ham_R[i][j][k][x] = new double *[num_orb];
-                    for (y = 0; y < num_orb; y++)
+                    for (int y = 0; y < num_orb; ++y)
                     {
                         Ham_R[i][j][k][x][y] = new double[num_orb];
                     }
@@ -206,13 +208,13 @@ int main()
 
     // Hamiltonian in reciprocal space
     std::complex<double> ****Ham_K = new std::complex<double> ***[2];
-    for (z = 0; z < 2; z++)
+    for (int z = 0; z < 2; ++z)
     {
         Ham_K[z] = new std::complex<double> **[num_kpoints];
-        for (i = 0; i < num_kpoints; i++)
+        for (int i = 0; i < num_kpoints; ++i)
         {
             Ham_K[z][i] = new std::complex<double> *[num_orb];
-            for (j = 0; j < num_orb; j++)
+            for (int j = 0; j < num_orb; ++j)
             {
                 Ham_K[z][i][j] = new std::complex<double>[num_orb];
             }
@@ -221,7 +223,7 @@ int main()
 
     // k-vectors for BZ integration
     double **k_vec = new double *[num_kpoints];
-    for (z = 0; z < num_kpoints; z++)
+    for (int z = 0; z < num_kpoints; ++z)
     {
         k_vec[z] = new double[3];
     }
@@ -256,6 +258,7 @@ int main()
           cell_vec[0][1] * (cell_vec[1][0] * cell_vec[2][2] - cell_vec[1][2] * cell_vec[2][0]) +
           cell_vec[0][2] * (cell_vec[1][0] * cell_vec[2][1] - cell_vec[1][1] * cell_vec[2][0]); // volume
 
+    // reciprocal vectors
     rec_vec[0][0] = (2 * M_PI / vol) * (cell_vec[1][1] * cell_vec[2][2] - cell_vec[1][2] * cell_vec[2][1]);
     rec_vec[0][1] = (2 * M_PI / vol) * (cell_vec[1][2] * cell_vec[2][0] - cell_vec[1][0] * cell_vec[2][2]);
     rec_vec[0][2] = (2 * M_PI / vol) * (cell_vec[1][0] * cell_vec[2][1] - cell_vec[1][1] * cell_vec[2][0]);
@@ -266,23 +269,21 @@ int main()
 
     rec_vec[2][0] = (2 * M_PI / vol) * (cell_vec[0][1] * cell_vec[1][2] - cell_vec[0][2] * cell_vec[1][1]);
     rec_vec[2][1] = (2 * M_PI / vol) * (cell_vec[0][2] * cell_vec[1][0] - cell_vec[0][0] * cell_vec[1][2]);
-    rec_vec[2][2] =
-        (2 * M_PI / vol) * (cell_vec[0][0] * cell_vec[1][1] - cell_vec[0][1] * cell_vec[1][0]); // reciprocal vectors
+    rec_vec[2][2] = (2 * M_PI / vol) * (cell_vec[0][0] * cell_vec[1][1] - cell_vec[0][1] * cell_vec[1][0]);
 
-    e = 0;
-    for (i = 0; i < kmesh[0]; i++)
+    idx = 0;
+    for (int i = 0; i < kmesh[0]; ++i)
     {
-        for (j = 0; j < kmesh[1]; j++)
+        for (int j = 0; j < kmesh[1]; ++j)
         {
-            for (k = 0; k < kmesh[2]; k++)
+            for (int k = 0; k < kmesh[2]; ++k)
             {
-                for (z = 0; z < 3; z++)
+                for (int z = 0; z < 3; ++z)
                 {
-
-                    k_vec[e][z] = (i * rec_vec[0][z]) / kmesh[0] + (j * rec_vec[1][z]) / kmesh[1] +
-                                  (k * rec_vec[2][z]) / kmesh[2];
+                    k_vec[idx][z] = (i * rec_vec[0][z]) / kmesh[0] + (j * rec_vec[1][z]) / kmesh[1] +
+                                    (k * rec_vec[2][z]) / kmesh[2];
                 }
-                e++;
+                idx++;
             }
         }
     }
@@ -296,32 +297,32 @@ int main()
     std::complex<double> *E = new std::complex<double>[ntot];
     std::complex<double> *dE = new std::complex<double>[ntot];
 
-    x = 0;
-    y = 1;
+    idx_x = 0;
+    idx_y = 1;
 
-    num = 0;
+    idx = 0;
     e_const = std::complex<double>(e_low, 0);
 
-    for (i = 0; i < ntot; i++)
+    for (int i = 0; i < ntot; ++i)
     {
         if (i == nrow)
         {
-            x = 1;
-            y = 0;
-            num = 0;
+            idx_x = 1;
+            idx_y = 0;
+            idx = 0;
             e_const = std::complex<double>(e_low, smearing);
         }
         if (i == nrow + ncol)
         {
-            x = 0;
-            y = -1;
-            num = 0;
+            idx_x = 0;
+            idx_y = -1;
+            idx = 0;
             e_const = std::complex<double>(e_fermi, smearing);
         }
 
-        E[i] = e_const + std::complex<double>(num * x * (de).real(), num * y * (de).imag());
-        dE[i] = std::complex<double>(x * (de).real(), y * (de).imag());
-        num++;
+        E[i] = e_const + std::complex<double>(idx * idx_x * (de).real(), idx * idx_y * (de).imag());
+        dE[i] = std::complex<double>(idx_x * (de).real(), idx_y * (de).imag());
+        idx++;
     }
 
     //===============================================================================
@@ -336,7 +337,7 @@ int main()
     std::cout << "---------------------------------------------------------------------" << std::endl;
     std::cout << "Crystal structure of system:" << std::endl;
     std::cout << "crystal axes: (cart. coord. in units of alat)" << std::endl;
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; ++i)
     {
         std::cout << std::showpoint << cell_vec[i][0] << "   " << cell_vec[i][1] << "   " << cell_vec[i][2]
                   << std::endl;
@@ -344,7 +345,7 @@ int main()
 
     std::cout << std::endl;
     std::cout << "reciprocal axes: (cart. coord. in units 1/alat)" << std::endl;
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; ++i)
     {
         std::cout << std::showpoint << rec_vec[i][0] << "   " << rec_vec[i][1] << "   " << rec_vec[i][2] << std::endl;
     }
@@ -353,7 +354,7 @@ int main()
               << "atomic positions"
               << "\t"
               << "orbitals" << std::endl;
-    for (i = 0; i < num_mag_atoms; i++)
+    for (int i = 0; i < num_mag_atoms; ++i)
     {
         std::cout << std::showpoint << positions[i][0] << "   " << positions[i][1] << "   " << positions[i][2] << "\t" << mag_orbs[i]
                   << std::endl;
@@ -400,7 +401,7 @@ int main()
             mag_orbs[central_atom], std::vector<double>(
                                         mag_orbs[central_atom]));
 
-        for (x = 0; x < 3; x++)
+        for (int x = 0; x < 3; ++x)
         {
             r[x] = specific[1] * cell_vec[0][x] + specific[2] * cell_vec[1][x] + specific[3] * cell_vec[2][x] +
                    (positions[specific[0]][x] - positions[central_atom][x]);
@@ -413,8 +414,7 @@ int main()
                   << specific[3] << ") with radius " << rad_specific << std::endl;
 
         err = false;
-        calc_exchange(central_atom, index_temp, num_orb, num_kpoints, n_max, ntot, spin, cell_vec, k_vec, E, dE,
-                      Ham_R, Ham_K, mag_orbs, exchange, err);
+        calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs, exchange, err);
 
         if (err)
         {
@@ -423,16 +423,16 @@ int main()
             return 0;
         }
 
-        for (x = 0; x < mag_orbs[central_atom]; x++)
+        for (int x = 0; x < mag_orbs[central_atom]; ++x)
         {
             matrix_trace += exchange[x][x];
         }
 
         std::cout << std::fixed;
 
-        for (x = 0; x < mag_orbs[central_atom]; x++)
+        for (int x = 0; x < mag_orbs[central_atom]; ++x)
         {
-            for (y = 0; y < mag_orbs[central_atom]; y++)
+            for (int y = 0; y < mag_orbs[central_atom]; ++y)
             {
                 std::cout << std::setprecision(6) << exchange[x][y] << " ";
             }
@@ -472,7 +472,7 @@ int main()
         neighbor_num = 1;
         sphere_num = 0;
 
-        for (p = 0; p < num_points; p++)
+        for (int p = 0; p < num_points; ++p)
         {
 
             if (p == 0)
@@ -490,16 +490,16 @@ int main()
 
                 matrix_trace = 0;
 
-                for (x = 0; x < mag_orbs[central_atom]; x++)
+                for (int x = 0; x < mag_orbs[central_atom]; ++x)
                 {
                     matrix_trace += (occ[0][x][x] - occ[1][x][x]);
                 }
 
                 std::cout << "Occupation matrix (N_up - N_dn) for atom " << central_atom << std::endl;
                 std::cout << std::fixed;
-                for (x = 0; x < mag_orbs[central_atom]; x++)
+                for (int x = 0; x < mag_orbs[central_atom]; ++x)
                 {
-                    for (y = 0; y < mag_orbs[central_atom]; y++)
+                    for (int y = 0; y < mag_orbs[central_atom]; ++y)
                     {
                         std::cout << std::setprecision(3) << occ[0][x][y] - occ[1][x][y] << " ";
                     }
@@ -523,7 +523,7 @@ int main()
                 if (sphere_num == max_sphere_num)
                     break;
 
-                for (z = 0; z < 4; z++)
+                for (int z = 0; z < 4; ++z)
                 {
                     index_temp[z] = index[p][z];
                 }
@@ -536,17 +536,16 @@ int main()
 
                 matrix_trace = 0;
 
-                for (x = 0; x < mag_orbs[central_atom]; x++)
+                for (int x = 0; x < mag_orbs[central_atom]; ++x)
                 {
-                    for (y = 0; y < mag_orbs[central_atom]; y++)
+                    for (int y = 0; y < mag_orbs[central_atom]; ++y)
                     {
                         exchange[x][y] = 0;
                     }
                 }
 
                 err = false;
-                calc_exchange(central_atom, index_temp, num_orb, num_kpoints, n_max, ntot, spin, cell_vec, k_vec, E, dE,
-                              Ham_R, Ham_K, mag_orbs, exchange, err);
+                calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs, exchange, err);
 
                 if (err)
                 {
@@ -555,23 +554,23 @@ int main()
                     return 0;
                 }
 
-                for (x = 0; x < mag_orbs[central_atom]; x++)
+                for (int x = 0; x < mag_orbs[central_atom]; ++x)
                 {
                     matrix_trace += exchange[x][x];
                 }
 
                 std::cout << std::fixed;
 
-                for (x = 0; x < mag_orbs[central_atom]; x++)
+                for (int x = 0; x < mag_orbs[central_atom]; ++x)
                 {
-                    for (y = 0; y < mag_orbs[central_atom]; y++)
+                    for (int y = 0; y < mag_orbs[central_atom]; ++y)
                     {
                         std::cout << std::setprecision(6) << exchange[x][y] << " ";
                     }
                     std::cout << std::endl;
                 }
 
-                std::cout << "Trace equals to: " << matrix_trace << " eV" << std::endl;
+                std::cout << "# " << central_atom << " " << index[p][3] << " " << index[p][0] << " " << index[p][1] << " " << index[p][2] << "      " << matrix_trace << " eV" << std::endl;
                 std::cout << std::endl;
             }
         }
