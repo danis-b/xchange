@@ -29,9 +29,9 @@ void coordination_sort(int central_atom, int num_atoms, int n_min[3], int n_max[
     int n_size[3];
     double r[3];
 
-    for (i = 0; i < 3; ++i)
+    for (int z = 0; z < 3; ++z)
     {
-        n_size[i] = n_max[i] - n_min[i] + 1; // Plus 1 for 0th
+        n_size[z] = n_max[z] - n_min[z] + 1; // Plus 1 for 0th
     }
 
     num_points = num_atoms * (n_size[0] * n_size[1] * n_size[2]);
