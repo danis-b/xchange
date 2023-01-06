@@ -56,10 +56,4 @@ Occupation matrix (N_up - N_dn) for atom  0 \
  0.103   0.141  0.013  0.087   0.004
 -0.018   0.051  0.004  0.004   0.040 
 
-Trace equals to:  1.836
-
-
-
-
-
 
