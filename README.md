@@ -34,7 +34,7 @@ in.json file contains the following information:
 * positions_of_magnetic_atoms - (3 x number_of_magnetic_atoms)(dfloat) array of magnetic atoms positions in unit cell (in Ang);
 * central_atom - (int) atomic number of magnetic atom, for which we want to calculate exchange interactions (0 in our case);
 * orbitals_of_magnetic_atoms - (number_of_magnetic_atoms) (int) array of magnetic orbitals (in our case it is [5]) 
-* max_sphere_num -(int) maximum number of coordination sphere to calculate exchange couplings around central_atom. This number breaks the loop;
+* max_sphere_num - (int) maximum number of coordination sphere to calculate exchange couplings around central_atom. This number breaks the loop;
 * exchange_for_specific_atoms - (4)(int) array used for calculation of exchange couplings **only** between central_atom and atom given by element[3], connected  with radius-vector **R** = element[0] * **cell_vector1** + element[1] * **cell_vector2** + element[2] * **cell_vector3**. All zero elements [0,0,0,0] makes the program calculate all possible exchange interactions restricted by max_sphere_num; 
 * spin - (int) spin number of the system;
 * ncol - (int) number of energy point for integration along real axis;
@@ -46,3 +46,16 @@ in.json file contains the following information:
 
  
 Both version of the program needs to be started at the same folder with in.json and hopping parameters from wannier90 (seedname_hr.dat) spin_up.dat and spin_dn.dat files. **Please, make sure that the additional lines before hopping parameters in seedname_up/dn.dat files are removed. Orbitals of magnetic atoms should be at the beginning among all Wannier  functions**.
+
+As a result, program will print the occupation difference between spin up and  down (i.e. magnetization) $ -\frac{1}{\pi}  \int \limits_{-\infty}^{E_F} d \epsilon \, {\mathrm Im} G^{m n}_{ii \uparrow} (\epsilon) -  {\mathrm Im} G^{m n}_{ii \downarrow} (\epsilon)$:
+Occupation matrix (N_up - N_dn) for atom  0
+ 0.871  -0.018  0.002  0.103  -0.018
+-0.018   0.826  0.077  0.141   0.051
+ 0.002   0.077  0.014  0.013   0.004
+ 0.103   0.141  0.013  0.087   0.004
+-0.018   0.051  0.004  0.004   0.040
+Trace equals to:  1.836
+
+
+
+
