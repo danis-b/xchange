@@ -49,7 +49,7 @@ Both version of the program needs to be started at the same folder with in.json 
 
 As a result, program will print the occupation difference between spin up and  down (i.e. magnetization):
 
-Radius vector is: -1.348810 1.399190 -0.150420 \
+Radius vector is: \
  0.137210   0.318561  -0.327827  
  0.454855  -0.128865   0.153048  
 -0.481865   0.123510  -0.066666  
