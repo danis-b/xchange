@@ -31,9 +31,9 @@ in.json file contains the following information:
 * number_of_magnetic_atoms - (int) number of magnetic atoms in unit cell (1 Mo in our case);
 * positions_of_magnetic_atoms - [3 x number_of_magnetic_atoms] array of magnetic atoms positions in unit cell (in Ang);
 * central_atom - (int) atomic number of magnetic atom, for which we want to calculate exchange interactions (0 in our case);
-* orbitals_of_magnetic_atoms - [number_of_magnetic_atoms] array of magnetic orbitals (we  have only one Mo atom with 5 orbitals, thus [5]) 
+* orbitals_of_magnetic_atoms - [number_of_magnetic_atoms] array of magnetic orbitals (inn our case it is [5]) 
 * max_sphere_num -(int) maximum number of coordination sphere to calculate exchange couplings around central_atom. This number breaks the loop;
-* exchange_for_specific_atoms - [4] array
+* exchange_for_specific_atoms - [4] array used for calculation of exchange couplings between central_atom and atom [3], connected  with radius-vector R = [0] * cell_vector1 + [1] * cell_vector2 + [2] * cell_vector3;
 
  
 
