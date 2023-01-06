@@ -27,7 +27,13 @@ in.json file contains the following information:
    "e_fermi": 3.2188,
    "kmesh": [5, 5, 5]
 ```
-* cell_vectors - unit cell vectors;
-* number_of_magnetic_atoms - number of  magnetic atoms in unit cell (1 Mo in our case);
+* cell_vectors - [3x3] array of unit cell vectors (in Ang);
+* number_of_magnetic_atoms - (int) number of magnetic atoms in unit cell (1 Mo in our case);
+* positions_of_magnetic_atoms - [3 x number_of_magnetic_atoms] array of magnetic atoms positions in unit cell (in Ang);
+* central_atom - (int) atomic number of magnetic atom, for which we want to calculate exchange interactions (0 in our case);
+* orbitals_of_magnetic_atoms - [number_of_magnetic_atoms] array of magnetic orbitals (we  have only one Mo atom with 5 orbitals, thus [5]) 
+* max_sphere_num -(int) maximum number of coordination sphere to calculate exchange couplings around central_atom. This number breaks the loop;
+* exchange_for_specific_atoms - [4] array
+
  
 
