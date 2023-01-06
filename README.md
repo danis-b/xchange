@@ -35,8 +35,8 @@ in.json file contains the following information:
 * max_sphere_num -(int) maximum number of coordination sphere to calculate exchange couplings around central_atom. This number breaks the loop;
 * exchange_for_specific_atoms - (4)(int) array used for calculation of exchange couplings **only** between central_atom and atom given by element[3], connected  with radius-vector **R** = element[0] * **cell_vector1** + element[1] * **cell_vector2** + element[2] * **cell_vector3**. All zero elements [0,0,0,0] makes the program calculate all possible exchange interactions restricted by max_sphere_num; 
 * spin - (int) spin number of the system;
-* ncol - (int) number of energy point along real axis for integration;
-* nrow - (int) number of energy point along imaginary axis for integration;  
+* ncol - (int) number of energy point for integration along real axis;
+* nrow - (int) number of energy point for integration along imaginary axis;  
 * smearing - (dfloat) numerical smearing parameter;
 * e_low -  (dfloat) lower boundary of orbital energies;
 * e_fermi - (dfloat) Femi energy;
