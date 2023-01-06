@@ -49,13 +49,7 @@ Both version of the program needs to be started at the same folder with in.json 
 
 As a result, program will print the occupation difference between spin up and  down (i.e. magnetization) $ -\frac{1}{\pi}  \int \limits_{-\infty}^{E_F} d \epsilon \, {\mathrm Im} $:
 
-Occupation matrix (N_up - N_dn) for atom  0 \\
- 0.871  -0.018  0.002  0.103  -0.018
--0.018   0.826  0.077  0.141   0.051
- 0.002   0.077  0.014  0.013   0.004
- 0.103   0.141  0.013  0.087   0.004
--0.018   0.051  0.004  0.004   0.040 
-Trace equals to:  1.836
+
 
 
 
