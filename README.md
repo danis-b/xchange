@@ -1,7 +1,7 @@
 # xchange.x
 This program calculates the isotropic exchange coupling parameters $J_{ij}$ for Heisenberg model:
 
-$$ \sum_{i<j} J_{ij} \mathbf{S}_i \mathbf{S}_j $$
+$$ \sum_{i<j} J_{ij} $$
 
 using Green's function technique (see [1](https://www.sciencedirect.com/science/article/pii/0304885387907219?via%3Dihub), [2](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.71.184434)]. Python version requires [numba](https://numba.pydata.org), while c++ version needs to be compiled with the additional [json](https://github.com/nlohmann/json) library.
 
