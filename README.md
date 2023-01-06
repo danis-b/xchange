@@ -33,7 +33,7 @@ in.json file contains the following information:
 * central_atom - (int) atomic number of magnetic atom, for which we want to calculate exchange interactions (0 in our case);
 * orbitals_of_magnetic_atoms - (number_of_magnetic_atoms) (int) array of magnetic orbitals (inn our case it is [5]) 
 * max_sphere_num -(int) maximum number of coordination sphere to calculate exchange couplings around central_atom. This number breaks the loop;
-* exchange_for_specific_atoms - (4) (int) array used for calculation of exchange couplings **only** between central_atom and atom given by element[3], connected  with radius-vector **R** = element[0] * **cell_vector1** + element[1] * **cell_vector2** + element[2] * **cell_vector3**. If is it set to [0,0,0,0], then program calualtes all possible exchange interactions restricted by max_sphere_num; 
+* exchange_for_specific_atoms - [4](int) array used for calculation of exchange couplings **only** between central_atom and atom given by element[3], connected  with radius-vector **R** = element[0] * **cell_vector1** + element[1] * **cell_vector2** + element[2] * **cell_vector3**. If is it set to [0,0,0,0], then program will calculate all possible exchange interactions restricted by max_sphere_num; 
 * spin - (int) spin number of the system;
 * ncol - (int) number of energy point along real axis for integration;
 * nrow - (int) number of energy point along imaginary axis for integration;  
