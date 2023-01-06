@@ -12,7 +12,9 @@ As an example let's calculate isotropic exchange interactions in BaMoP2O8 system
 in.json file contains the following information:
 
 ```json
-   "cell_vectors": [[4.880000,   0.000000,   0.000000], [2.028352,   4.438489,   0.000000], [0.547938,   0.352040,  7.788818]],
+   "cell_vectors": [[4.880000,   0.000000,   0.000000], 
+                    [2.028352,   4.438489,   0.000000], 
+                    [0.547938,   0.352040,  7.788818]],
    "number_of_magnetic_atoms": 1,
    "positions_of_magnetic_atoms": [[0.00000,   0.00000,  0.00000]],
    "central_atom": 0,
