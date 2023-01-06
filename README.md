@@ -3,7 +3,7 @@ This program calculates the isotropic exchange coupling parameters $J_{ij}$ for 
 
 $$  J_{ij} = \frac{1}{2 \pi S^2}  \int \limits_{-\infty}^{E_F} d \epsilon \, {\mathrm Im} \left( \sum \limits_{m, m^{\prime},  n, n^{\prime}} \Delta^{m m^{\prime}}_i G^{m^{\prime} n}_{ij \downarrow} (\epsilon) \Delta^{n n^{\prime}}_j G^{n^{\prime} m}_{ji \uparrow} (\epsilon) \right), $$
 
-where $m, m^{\prime},  n, n^{\prime}$ are orbital quantum numbers, $S$ is the spin quantum number, and $\Delta^{m m^{\prime}}_i = H^{m m^{\prime}}_{ii \uparrow} - H^{m m^{\prime}}_{ii \downarrow}$ is the on-site potential. In turn, the Green's function is defined as $G(\epsilon) = (\epsilon - H)^{-1} $
+where $m, m^{\prime},  n, n^{\prime}$ are orbital quantum numbers, $S$ is the spin quantum number, and $\Delta^{m m^{\prime}}_i = H^{m m^{\prime}}_{ii \uparrow} - H^{m m^{\prime}}_{ii \downarrow}$ is the on-site potential. In turn, the Green's function is defined as $G(\epsilon) = 1/(\epsilon - H) $
 
 
 Python version requires [numba](https://numba.pydata.org), while c++ version needs to be compiled with the additional [json](https://github.com/nlohmann/json) library.
