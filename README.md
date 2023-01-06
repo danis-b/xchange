@@ -49,11 +49,12 @@ Both version of the program needs to be started at the same folder with in.json 
 
 As a result, program will print the occupation difference between spin up and  down (i.e. magnetization):
 
-Radius vector is:  \
+Occupation matrix (N_up - N_dn) for atom  0  \
  0.137210   0.318561  -0.327827  
  0.454855  -0.128865   0.153048  
 -0.481865   0.123510  -0.066666  
  0.019533   0.491217   0.435620  
- 0.234957   0.849009  -0.890015 \ 
+ 0.234957   0.849009  -0.890015 
+ 
 Trace equals to:  1.836
 
