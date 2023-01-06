@@ -33,9 +33,14 @@ in.json file contains the following information:
 * central_atom - (int) atomic number of magnetic atom, for which we want to calculate exchange interactions (0 in our case);
 * orbitals_of_magnetic_atoms - [number_of_magnetic_atoms] (int) array of magnetic orbitals (inn our case it is [5]) 
 * max_sphere_num -(int) maximum number of coordination sphere to calculate exchange couplings around central_atom. This number breaks the loop;
-* exchange_for_specific_atoms - [4] (int) array used for calculation of exchange couplings **only** between central_atom and atom given by element[3], connected  with radius-vector R = element[0] * cell_vector1 + element[1] * cell_vector2 + element[2] * cell_vector3. If is it set to [0,0,0,0], then program calualtes all possible exchange interactions restricted by max_sphere_num; 
-* spin - spin number of the system;
-* ncol -   
+* exchange_for_specific_atoms - [4] (int) array used for calculation of exchange couplings **only** between central_atom and atom given by element[3], connected  with radius-vector **R** = element[0] * **cell_vector1** + element[1] * **cell_vector2** + element[2] * **cell_vector3**. If is it set to [0,0,0,0], then program calualtes all possible exchange interactions restricted by max_sphere_num; 
+* spin - (int) spin number of the system;
+* ncol - (int) number of energy point along real axis for integration;
+* nrow - (int) number of energy point along imaginary axis for integration;  
+* smearing - (dfloat) numerical smearing parameter;
+* e_low -  (dfloat) lower boundary of orbital energies;
+* e_fermi - (dfloat) Femi energy;
+* kmesh [3x1] (int) array - k-mesh for Brillouin zone integration; 
 
  
-
+Both version of the program needs to be started at the same folder with in.json and hopping parameters from wannier90 (seedname_hr.dat) spin_up.dat and spin_dn.dat files. **Please, make sure that the additional lines before hopping parameters in seedname_up/dn.dat files are removed.**
