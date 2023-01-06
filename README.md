@@ -47,7 +47,7 @@ in.json file contains the following information:
  
 Both version of the program needs to be started at the same folder with in.json and hopping parameters from wannier90 (seedname_hr.dat) spin_up.dat and spin_dn.dat files. **Please, make sure that the additional lines before hopping parameters in seedname_up/dn.dat files are removed. Orbitals of magnetic atoms should be at the beginning among all Wannier  functions**.
 
-As a result, program will print the occupation difference between spin up and  down (i.e. magnetization) $ - \frac{1}{\pi}  \int $:
+As a result, program will print the occupation difference between spin up and  down (i.e. magnetization) $ -\frac{1}{\pi}$:
 
 
 
