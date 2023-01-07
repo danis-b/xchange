@@ -1,8 +1,9 @@
-import numpy as np
-import math
 import json
-from numba import jit
+import math
 from datetime import datetime
+
+import numpy as np
+from numba import jit
 
 
 @jit(nopython=True) 
@@ -151,9 +152,7 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, ce
             greenR_ij += weight * np.exp( 1j * np.dot(k_vec[e],r) ) * greenK_ij
             greenR_ji += weight * np.exp(-1j * np.dot(k_vec[e],r) ) * greenK_ji
 
-        dot_product = np.zeros((mag_orbs[central_atom],  mag_orbs[central_atom]), dtype=np.complex128)
-
-        dot_product += np.dot(np.dot(np.dot(delta_i, greenR_ij),delta_j),greenR_ji) 
+        dot_product = np.dot(np.dot(np.dot(delta_i, greenR_ij),delta_j),greenR_ji) 
 
         exchange -= (1 / (2 * np.pi * spin**2 )) * (dot_product * dE[num]).imag
        
@@ -189,7 +188,6 @@ def calc_occupation(central_atom, num_orb, num_kpoints, ntot, Ham_K, E, dE, mag_
         occ -= (1 / np.pi) * (greenR_ii * dE[num]).imag
 
     return occ
-
 
 
 
