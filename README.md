@@ -86,4 +86,4 @@ Atom 0 (000)<-->Atom 0 ( 0 0 1 ) with radius 7.8160  is # 1 \
 \#  0 0 0 0 1 0.000282 eV
 
 
-It results $J^\prime \sim$ 0.1 eV, $J_c \sim$ 0.3 eV and $J \sim$ 4.8 eV in figure above. 
+It results $J^\prime \sim$ 0.1 meV, $J_c \sim$ 0.3 meV and $J \sim$ 4.8 meV in figure above. 
