@@ -3,7 +3,7 @@ This program calculates the isotropic exchange coupling parameters $J_{ij}$ for 
 
 $$  J_{ij} = \frac{1}{2 \pi S^2}  \int \limits_{-\infty}^{E_F} d \epsilon  {\mathrm Im} \left( \sum \limits_{m, m^{\prime},  n, n^{\prime}} \Delta^{m m^{\prime}}_i G^{m^{\prime} n}_{ij \downarrow} (\epsilon) \Delta^{n n^{\prime}}_j G^{n^{\prime} m}_{ji \uparrow} (\epsilon) \right), $$
 
-where $m, m^{\prime},  n, n^{\prime}$ are orbital quantum numbers, $S$ is the spin quantum number, $E_F$ is the Fermi energy. $\Delta^{m m^{\prime}}_i$ and $G(\epsilon)$ are the on-site potential and  Green's function, respectively. Python version requires [numba](https://numba.pydata.org), while c++ version needs to be compiled with the additional [json](https://github.com/nlohmann/json) library.
+where $m, m^{\prime},  n, n^{\prime}$ are orbital quantum numbers, $S$ is the spin quantum number, $E_F$ is the Fermi energy. $\Delta^{m m^{\prime}}_i$ and $G(\epsilon)$ are the on-site potential and  Green's function, respectively. Python version requires [numba](https://numba.pydata.org), while c++ version needs to be compiled with the additional [json](https://github.com/nlohmann/json) and [LAPACK](https://netlib.org/lapack/)  libraries.
 
 # Usage 
 As an example let's calculate isotropic exchange interactions in BaMoP2O8 system [[Phys. Rev. B 98, 094406 (2018)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.98.094406)]. DFT+U electronic structure near Fermi level was parametrized by Wannier functions of one Mo(d) and eight O(p) orbitals (5 + 8 * 3 = 29 orbitals):
@@ -86,4 +86,4 @@ Atom 0 (000)<-->Atom 0 ( 0 0 1 ) with radius 7.8160  is # 1 \
 \#  0 0 0 0 1 0.000282 eV
 
 
-It results $J^\prime \sim$ 0.1 eV, $J_c \sim$ 0.3 eV and $J \sim$ 4.8 eV in figure above. 
+It results $J^\prime \sim$ 0.1 meV, $J_c \sim$ 0.3 meV and $J \sim$ 4.8 meV in figure above. 
