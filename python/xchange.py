@@ -138,16 +138,14 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, ce
                 loc_greenK[z] = np.linalg.inv(E[num]*np.diag(np.ones(num_orb)) - Ham_K[z,e])
            
             # read the necessary block
-            greenK_ij[:mag_orbs[central_atom], :mag_orbs[index_temp[3]]] = loc_greenK[1, shift_i:mag_orbs[central_atom], shift_j:mag_orbs[index_temp[3]]]
-            greenK_ji[:mag_orbs[index_temp[3]], :mag_orbs[central_atom]] = loc_greenK[0, shift_j:mag_orbs[index_temp[3]], shift_i:mag_orbs[central_atom]]
+            greenK_ij[:mag_orbs[central_atom], :mag_orbs[index_temp[3]]] = loc_greenK[1, shift_i:mag_orbs[central_atom] + shift_i, shift_j:mag_orbs[index_temp[3]] + shift_j]
+            greenK_ji[:mag_orbs[index_temp[3]], :mag_orbs[central_atom]] = loc_greenK[0, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_i:mag_orbs[central_atom] + shift_i]
 
+            delta_i[:mag_orbs[central_atom],:mag_orbs[central_atom]] += weight * (Ham_K[0, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] - 
+            Ham_K[1, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i])
 
-            delta_i[:mag_orbs[central_atom],:mag_orbs[central_atom]] += weight * (Ham_K[0, e, shift_i:mag_orbs[central_atom], shift_i:mag_orbs[central_atom]] - 
-            Ham_K[1, e, shift_i:mag_orbs[central_atom],shift_i:mag_orbs[central_atom]])
-
-            delta_j[:mag_orbs[index_temp[3]],:mag_orbs[index_temp[3]]] += weight * (Ham_K[0, e, shift_j:mag_orbs[index_temp[3]], shift_j:mag_orbs[index_temp[3]]] - 
-            Ham_K[1, e, shift_j:mag_orbs[index_temp[3]],shift_j:mag_orbs[index_temp[3]]])
-
+            delta_j[:mag_orbs[index_temp[3]],:mag_orbs[index_temp[3]]] += weight * (Ham_K[0, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] - 
+            Ham_K[1, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j])
 
             greenR_ij += weight * np.exp( 1j * np.dot(k_vec[e],r) ) * greenK_ij
             greenR_ji += weight * np.exp(-1j * np.dot(k_vec[e],r) ) * greenK_ji
@@ -181,7 +179,7 @@ def calc_occupation(central_atom, num_orb, num_kpoints, ntot, Ham_K, E, dE, mag_
                 loc_greenK[z] = np.linalg.inv(E[num]*np.diag(np.ones(num_orb)) - Ham_K[z,e]) 
            
             #read the necessary block
-            greenK_ii[:, :mag_orbs[central_atom], :mag_orbs[central_atom]] = loc_greenK[:, shift_i:mag_orbs[central_atom], shift_i:mag_orbs[central_atom]]
+            greenK_ii[:, :mag_orbs[central_atom], :mag_orbs[central_atom]] = loc_greenK[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
 
             greenR_ii += weight * greenK_ii
 
