@@ -105,7 +105,7 @@ def calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, Ham_R):
 
 
 @jit(nopython=True) 
-def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs):
+def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, cell_vec, k_vec, E, dE, Ham_K, selfen, mag_orbs):
     # This function calculates exchange coupling parameter between atoms with index 'central_atom' and 'index_temp'
 
     weight = 1/num_kpoints
@@ -113,6 +113,7 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, ce
     r =  np.zeros(3)
 
     loc_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
+    corr_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
     greenK_ij = np.zeros((mag_orbs[central_atom], mag_orbs[index_temp[3]]), dtype=np.complex128)
     greenK_ji = np.zeros((mag_orbs[index_temp[3]], mag_orbs[central_atom]), dtype=np.complex128)
     exchange = np.zeros((mag_orbs[central_atom], mag_orbs[central_atom]))
@@ -134,17 +135,26 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, ce
 
             for z in range(2):
                 #G = 1/(E - H)
-                loc_greenK[z] = np.linalg.inv(E[num]*np.diag(np.ones(num_orb)) - Ham_K[z,e])
+                loc_greenK[z] = np.linalg.inv(E[num]*np.diag(np.ones(num_orb)) - Ham_K[z,e] - np.diag(selfen[z, num, e]))
+
+                #Dyson  equation for correlated  Green's function
+                corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - np.diag(selfen[z, num, e]))
            
             # read the necessary block
-            greenK_ij[:mag_orbs[central_atom], :mag_orbs[index_temp[3]]] = loc_greenK[1, shift_i:mag_orbs[central_atom] + shift_i, shift_j:mag_orbs[index_temp[3]] + shift_j]
-            greenK_ji[:mag_orbs[index_temp[3]], :mag_orbs[central_atom]] = loc_greenK[0, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_i:mag_orbs[central_atom] + shift_i]
+            greenK_ij[:mag_orbs[central_atom], :mag_orbs[index_temp[3]]] = corr_greenK[1, shift_i:mag_orbs[central_atom] + shift_i, shift_j:mag_orbs[index_temp[3]] + shift_j]
+            greenK_ji[:mag_orbs[index_temp[3]], :mag_orbs[central_atom]] = corr_greenK[0, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_i:mag_orbs[central_atom] + shift_i]
 
-            delta_i[:mag_orbs[central_atom],:mag_orbs[central_atom]] += weight * (Ham_K[0, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] - 
-            Ham_K[1, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i])
 
-            delta_j[:mag_orbs[index_temp[3]],:mag_orbs[index_temp[3]]] += weight * (Ham_K[0, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] - 
-            Ham_K[1, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j])
+            delta_i[:mag_orbs[central_atom],:mag_orbs[central_atom]] += weight * (Ham_K[0, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] + 
+            np.diag(selfen[0, num, e,  shift_i:mag_orbs[central_atom] + shift_i]) - 
+            Ham_K[1, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] -  
+            np.diag(selfen[1, num, e,  shift_i:mag_orbs[central_atom] + shift_i]) )
+
+            delta_j[:mag_orbs[index_temp[3]],:mag_orbs[index_temp[3]]] += weight * (Ham_K[0, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] +
+            np.diag(selfen[0, num, e,  shift_j:mag_orbs[index_temp[3]] + shift_j]) -                                                                         - 
+            Ham_K[1, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] -
+            np.diag(selfen[1, num, e,  shift_j:mag_orbs[index_temp[3]] + shift_j]))
+
 
             greenR_ij += weight * np.exp( 1j * np.dot(k_vec[e],r) ) * greenK_ij
             greenR_ji += weight * np.exp(-1j * np.dot(k_vec[e],r) ) * greenK_ji
@@ -157,12 +167,13 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, ntot, spin, ce
 
 
 @jit(nopython=True) 
-def calc_occupation(central_atom, num_orb, num_kpoints, ntot, Ham_K, E, dE, mag_orbs):
+def calc_occupation(central_atom, num_orb, num_kpoints, ntot, Ham_K, selfen, E, dE, mag_orbs):
     #This function calculates occupation matrices for atom with index 'central_atom'
 
     weight = 1/num_kpoints
 
     loc_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
+    corr_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
     greenK_ii = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
     occ = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]))
 
@@ -171,13 +182,18 @@ def calc_occupation(central_atom, num_orb, num_kpoints, ntot, Ham_K, E, dE, mag_
     for num in range(ntot):
         greenR_ii = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
 
-        for e in range(num_kpoints):
+        for  e in range(num_kpoints):
+
             for z in range(2):
                 #G = 1/(E - H)
                 loc_greenK[z] = np.linalg.inv(E[num]*np.diag(np.ones(num_orb)) - Ham_K[z,e]) 
+
+                #Dyson  equation for correlated  Green's function
+                corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - np.diag(selfen[z, num, e]))
+
            
             #read the necessary block
-            greenK_ii[:, :mag_orbs[central_atom], :mag_orbs[central_atom]] = loc_greenK[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
+            greenK_ii[:, :mag_orbs[central_atom], :mag_orbs[central_atom]] = corr_greenK[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
 
             greenR_ii += weight * greenK_ii
 
@@ -246,6 +262,21 @@ if __name__ == '__main__':
 
     num_kpoints = kmesh[0] * kmesh[1] * kmesh[2]
     ntot = ncol + 2 * nrow
+
+
+    #self-energy
+    selfen = np.zeros((2, ntot, num_kpoints, num_orb), dtype=np.complex128)
+    with open('selfen_up.dat') as fp:
+        for i, line in enumerate(fp):
+            item = line.split()
+            selfen[0, i%ncol + nrow, int(item[0]) - 1, int(item[1]) - 1] = 0.001 * complex(float(item[4]), float(item[5]))
+
+
+    with open('selfen_dn.dat') as fp:
+        for i, line in enumerate(fp):
+            item = line.split()
+            selfen[1, i%ncol + nrow, int(item[0]) - 1, int(item[1]) - 1] = 0.001 * complex(float(item[4]), float(item[5]))
+
 
 
     if (central_atom < 0  or  central_atom >= num_mag_atoms):
@@ -333,7 +364,7 @@ if __name__ == '__main__':
         for p in range(num_points):
 
             if(p == 0):
-                occ = calc_occupation(central_atom, num_orb, num_kpoints, ntot, Ham_K, E, dE, mag_orbs)
+                occ = calc_occupation(central_atom, num_orb, num_kpoints, ntot, Ham_K, selfen, E, dE, mag_orbs)
 
                 print('Occupation matrix (N_up - N_dn) for atom ', central_atom)
 
@@ -353,7 +384,7 @@ if __name__ == '__main__':
                 print('\n')
                 print("Atom", central_atom, "(000)<-->Atom", index[p,3], "(", index[p,0], index[p,1], index[p,2], ") with radius", '{:.4f}'.format(radius[p]), " is #", neighbor_num)
 
-                exchange = calc_exchange(central_atom, index[p], num_orb, num_kpoints, ntot, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs)
+                exchange = calc_exchange(central_atom, index[p], num_orb, num_kpoints, ntot, spin, cell_vec, k_vec, E, dE, Ham_K, selfen, mag_orbs)
 
                 print('\n'.join('  '.join('{:.6f}'.format(item) for item in row) for row in exchange))
                 print('# ', central_atom, index[p,3], index[p,0], index[p,1], index[p,2], '{:.6f}'.format(np.trace(exchange)), 'eV')
