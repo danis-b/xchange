@@ -90,8 +90,8 @@ def calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, Ham_R):
     #Fourier transformation  of Hamiltonian
     Ham_K = np.zeros((2, num_kpoints, num_orb, num_orb), dtype=np.complex128)
 
-    for i in range(n_min[0], n_max[0]):
-        for j in range(n_min[1], n_max[1]):
+    for i in range(n_min[0], n_max[0]+1):
+        for j in range(n_min[1], n_max[1]+1):
             for k in range(n_min[2], n_max[2]+1):
                 for z in range(2):
                     r = i * cell_vec[0] + j * cell_vec[1] + k * cell_vec[2]
