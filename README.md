@@ -1,9 +1,15 @@
 # xchange.x
 This program calculates the isotropic exchange coupling parameters $J_{ij}$ for Heisenberg model $H = \sum_{i < j} J_{ij} \mathbf{S}_i \mathbf{S}_j$ using Green's function technique (see [1](https://www.sciencedirect.com/science/article/abs/pii/0304885387907219), [2](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.71.184434)):
 
-$$  J_{ij} = \frac{1}{2 \pi S^2}  \int \limits_{-\infty}^{E_F} d \epsilon  {\mathrm Im} \left( \sum \limits_{m, m^{\prime},  n, n^{\prime}} \Delta^{m m^{\prime}}_i G^{m^{\prime} n}_{ij \downarrow} (\epsilon) \Delta^{n n^{\prime}}_j G^{n^{\prime} m}_{ji \uparrow} (\epsilon) \right), $$
+$$  J_{ij} = \frac{1}{2 \pi S^2}  {\mathrm Im} \left( \int \limits_{-\infty}^{E_F} d \epsilon \Delta_i G_{ij \downarrow} (\epsilon) \Delta_j G_{ji \uparrow} (\epsilon) \right), $$
 
-where $m, m^{\prime},  n, n^{\prime}$ are orbital quantum numbers, $S$ is the spin quantum number, $E_F$ is the Fermi energy. $\Delta^{m m^{\prime}}_i$ and $G(\epsilon)$ are the on-site potential and  Green's function, respectively. Python version requires [numba](https://numba.pydata.org), while c++ version needs to be compiled with the additional [json](https://github.com/nlohmann/json) and [LAPACK](https://netlib.org/lapack/)  libraries.
+where $m, m^{\prime},  n, n^{\prime}$ are orbital quantum numbers, $S$ is the spin quantum number, $E_F$ is the Fermi energy. $\Delta^{m m^{\prime}}_i$ and $G(\epsilon)$ are the on-site potential and  Green's function, respectively. 
+
+# Dependencies
+Python version requires [numba](https://numba.pydata.org) \
+c++ version is implemented as cpp_modules, which requires [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) and [pybind11](https://pybind11.readthedocs.io/en/stable/advanced/pycpp/index.html#)  libraries.
+
+
 
 # Usage 
 As an example let's calculate isotropic exchange interactions in BaMoP2O8 system [[Phys. Rev. B 98, 094406 (2018)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.98.094406)]. DFT+U electronic structure near Fermi level was parametrized by Wannier functions of one Mo(d) and eight O(p) orbitals (5 + 8 * 3 = 29 orbitals):
@@ -45,7 +51,7 @@ in.json file contains the following information:
 * kmesh [3x1] (int) array - k-mesh for Brillouin zone integration; 
 
  
-Both version of the program needs to be started at the same folder with in.json and hopping parameters from wannier90 (seedname_hr.dat) spin_up.dat and spin_dn.dat files. **Please, make sure that the additional lines before hopping parameters in seedname_up/dn.dat files are removed. Orbitals of magnetic atoms should be at the beginning among all Wannier  functions**.
+Both version of the program needs to be started at the same folder with in.json and hopping parameters from wannier90 (seedname_hr.dat) spin_up.dat and spin_dn.dat files. **Orbitals of magnetic atoms should be at the beginning among all Wannier  functions**.
 
 As a result, program will print the occupation difference between spin up and  down (i.e. magnetization):\
 Occupation matrix (N_up - N_dn) for atom  0  \
