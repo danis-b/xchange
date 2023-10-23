@@ -2,7 +2,8 @@ import json
 import math
 from io import StringIO
 from typing import OrderedDict
-from datetime import datetime
+from datetime import date, datetime
+import torch
 
 import numpy as np
 from numba import jit
@@ -167,90 +168,95 @@ def calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, Ham_R):
 
 
 
-@jit(nopython=True) 
-def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, num_freq, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs):
+
+def calc_greenK(num_freq, num_kpoints, num_orb, Ham_K, E):
+    #Greens function in frequency and kmesh grid
+
+    freq =  E.reshape(num_freq, 1, 1, 1)  *  np.tile(np.eye(num_orb), (num_kpoints, 1, 1))
+    freq = np.stack((freq, freq)) # spin up and down
+
+    Ham_K_up = Ham_K[0]
+    Ham_K_dn = Ham_K[1]
+    Ham_K_up = np.tile(Ham_K_up, (num_freq, 1, 1, 1))
+    Ham_K_dn = np.tile(Ham_K_dn, (num_freq, 1, 1, 1))
+    Ham_K = np.stack((Ham_K_up, Ham_K_dn))
+
+    #batched inversion
+    with torch.no_grad():
+        greenK = (torch.linalg.inv(torch.from_numpy(freq - Ham_K))).numpy() 
+
+    # greenK = np.linalg.inv(freq - Ham_K)
+    
+    return greenK
+
+
+
+
+def cal_delta(num_freq, n_max, Ham_R):
+    #On-site splitting
+    delta = Ham_R[0, n_max[0], n_max[1], n_max[2]] - Ham_R[1, n_max[0], n_max[1], n_max[2]]
+
+    delta  = np.tile(delta, (num_freq, 1, 1))
+
+    return delta
+
+
+
+def calc_exchange(central_atom, index_temp, num_kpoints, num_freq, spin, cell_vec, k_vec, dE, mag_orbs, greenK, delta):
     # This function calculates exchange coupling parameter between atoms with index 'central_atom' and 'index_temp'
 
-    weight = 1/num_kpoints
+    weight = 1/num_kpoints    
 
-    loc_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
-    greenK_ij = np.zeros((mag_orbs[central_atom], mag_orbs[index_temp[3]]), dtype=np.complex128)
-    greenK_ji = np.zeros((mag_orbs[index_temp[3]], mag_orbs[central_atom]), dtype=np.complex128)
-    exchange = np.zeros((mag_orbs[central_atom], mag_orbs[central_atom]))
+    r = index_temp[0] * cell_vec[0] + index_temp[1] * cell_vec[1] + index_temp[2] * cell_vec[2]
+    phase = np.exp(1j * np.matmul(k_vec, r))
+
 
     shift_i = np.sum(mag_orbs[:central_atom])
     shift_j = np.sum(mag_orbs[:index_temp[3]])
-    
-    r = index_temp[0] * cell_vec[0] + index_temp[1] * cell_vec[1] + index_temp[2] * cell_vec[2]
 
-    for num in range(num_freq):
-        delta_i = np.zeros((mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
-        delta_j = np.zeros((mag_orbs[index_temp[3]], mag_orbs[index_temp[3]]), dtype=np.complex128)
-        greenR_ij = np.zeros((mag_orbs[central_atom], mag_orbs[index_temp[3]]), dtype=np.complex128)
-        greenR_ji = np.zeros((mag_orbs[index_temp[3]], mag_orbs[central_atom]), dtype=np.complex128)
+    delta_i = np.zeros((num_freq, mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
+    delta_j = np.zeros((num_freq, mag_orbs[index_temp[3]], mag_orbs[index_temp[3]]), dtype=np.complex128)
+
+    delta_i[:, :mag_orbs[central_atom],:mag_orbs[central_atom]] = delta[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
+    delta_j[:, :mag_orbs[index_temp[3]],:mag_orbs[index_temp[3]]] = delta[:, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j]
 
 
-        for  e in range(num_kpoints):
+    greenK_ij = np.zeros((num_freq, num_kpoints, mag_orbs[central_atom], mag_orbs[index_temp[3]]), dtype=np.complex128)
+    greenK_ji = np.zeros((num_freq, num_kpoints, mag_orbs[central_atom], mag_orbs[index_temp[3]]), dtype=np.complex128)
 
-            for z in range(2):
-                #G = 1/(E - H)
-                loc_greenK[z] = np.linalg.inv(E[num] * np.eye(num_orb) - Ham_K[z,e]) 
-           
-            # read the necessary block
-            greenK_ij[:mag_orbs[central_atom], :mag_orbs[index_temp[3]]] = loc_greenK[1, shift_i:mag_orbs[central_atom] + shift_i, shift_j:mag_orbs[index_temp[3]] + shift_j]
-            greenK_ji[:mag_orbs[index_temp[3]], :mag_orbs[central_atom]] = loc_greenK[0, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_i:mag_orbs[central_atom] + shift_i]
+    greenK_ij[:, :, :mag_orbs[central_atom], :mag_orbs[index_temp[3]]] = greenK[1, :, :, shift_i:mag_orbs[central_atom] + shift_i, shift_j:mag_orbs[index_temp[3]] + shift_j]
+    greenK_ji[:, :, :mag_orbs[index_temp[3]], :mag_orbs[central_atom]] = greenK[0, :, :, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_i:mag_orbs[central_atom] + shift_i]
 
-            delta_i[:mag_orbs[central_atom],:mag_orbs[central_atom]] += weight * (Ham_K[0, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] - 
-            Ham_K[1, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i])
+    greenR_ij =  weight * np.tensordot(greenK_ij, phase, axes=(1, 0))
+    greenR_ji =  weight * np.tensordot(greenK_ji, np.conj(phase), axes=(1, 0))
 
-            delta_j[:mag_orbs[index_temp[3]],:mag_orbs[index_temp[3]]] += weight * (Ham_K[0, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] - 
-            Ham_K[1, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j])
+    dot_product =  np.matmul(np.matmul(np.matmul(delta_i, greenR_ij), delta_j),greenR_ji) 
 
-            greenR_ij += weight * np.exp( 1j * np.dot(k_vec[e],r) ) * greenK_ij
-            greenR_ji += weight * np.exp(-1j * np.dot(k_vec[e],r) ) * greenK_ji
+    #exchange ~ Im \int_{-\inf Ef} delta_i * greenR_ij * delta_j * greenR_ji * dE
 
+    exchange = np.zeros((mag_orbs[central_atom], mag_orbs[central_atom]))
+    exchange -= (1 / (2 * np.pi * spin**2 )) * np.tensordot(dot_product, dE, axes=(0, 0)).imag
 
-        dot_product = np.dot(np.dot(np.dot(delta_i, greenR_ij),delta_j),greenR_ji) 
-
-        exchange -= (1 / (2 * np.pi * spin**2 )) * (dot_product * dE[num]).imag
-       
     return exchange
 
 
-@jit(nopython=True) 
-def calc_occupation(central_atom, num_orb, num_kpoints, num_freq, Ham_K, E, dE, mag_orbs):
-    #This function calculates occupation matrices for atom with index 'central_atom'
 
-    weight = 1/num_kpoints
 
-    loc_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
-    greenK_ii = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
-    occ = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]))
+def calc_occupation(central_atom, num_kpoints, mag_orbs, dE, greenK):
+    weight = 1 / num_kpoints
+    shift_i = np.sum(mag_orbs[:central_atom])
 
-    shift_i = mag_orbs[:central_atom].sum()
+    greenR = weight * np.sum(greenK, axis = 2)
 
-    for num in range(num_freq):
-        greenR_ii = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
+    occ = np.tensordot(greenR, dE, axes=([1], 0)).imag
+    occ_local = - (1 / np.pi) * occ[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
 
-        for e in range(num_kpoints):
-            for z in range(2):
-                #G = 1/(E - H)
-                loc_greenK[z] = np.linalg.inv(E[num] * np.eye(num_orb) - Ham_K[z,e]) 
-           
-            #read the necessary block
-            greenK_ii[:, :mag_orbs[central_atom], :mag_orbs[central_atom]] = loc_greenK[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
-
-            greenR_ii += weight * greenK_ii
-
-        occ -= (1 / np.pi) * (greenR_ii * dE[num]).imag
-
-    return occ
-
+    return occ_local
 
 
 
 if __name__ == '__main__':
-    print("Program xchange.x v.4.0 (python) starts on  ", datetime.now())
+    print("Program xchange.x v.4.0 (vectorized version) starts on  ", datetime.now())
     print('=' * 69)
 
 
@@ -358,7 +364,13 @@ if __name__ == '__main__':
     Ham_K = calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, Ham_R)
 
     print('Fourier transformation  of Hamiltonian is completed')
- 
+
+    greenK = calc_greenK(num_freq, num_kpoints, num_orb, Ham_K, E)
+
+    print('Greens function in frequency and kmesh grid is calculated')
+
+    delta = cal_delta(num_freq, n_max, Ham_R)
+
 
     if(specific_true):
         index_temp = np.zeros(4, dtype=int)
@@ -368,10 +380,10 @@ if __name__ == '__main__':
         for x in range(3):
             r[x] = specific[0] * cell_vec[0][x] + specific[1] * cell_vec[1][x] + specific[2] * cell_vec[2][x] + (positions[specific[3]][x] - positions[central_atom][x])
 
-        print('=' * 69) 
+        print('=' * 69)         
         print("Interaction of atom", central_atom, "(000)<-->atom", specific[0], "(", specific[1], specific[2], specific[3], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
 
-        exchange = calc_exchange(central_atom, specific, num_orb, num_kpoints, num_freq, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs)
+        exchange = calc_exchange(central_atom, specific, num_kpoints, num_freq, spin, cell_vec, k_vec, dE, mag_orbs, greenK, delta)
 
         print('\n'.join('  '.join('{:.6f}'.format(item) for item in row) for row in exchange))
         print('Trace equals to: ', '{:.6f}'.format(np.trace(exchange)), 'eV')
@@ -388,7 +400,7 @@ if __name__ == '__main__':
         for p in range(num_points):
 
             if(p == 0):
-                occ = calc_occupation(central_atom, num_orb, num_kpoints, num_freq, Ham_K, E, dE, mag_orbs)
+                occ = calc_occupation(central_atom, num_kpoints, mag_orbs, dE, greenK)
 
                 print('Occupation matrix (N_up - N_dn) for atom ', central_atom)
 
@@ -408,7 +420,7 @@ if __name__ == '__main__':
                 print('\n')
                 print("Interaction of atom", central_atom, "(000)<-->atom", index[p,3], "(", index[p,0], index[p,1], index[p,2], ") in sphere", sphere_num ,"with radius", '{:.4f}'.format(radius[p]), " -- ", neighbor_num)
 
-                exchange = calc_exchange(central_atom, index[p], num_orb, num_kpoints, num_freq, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs)
+                exchange = calc_exchange(central_atom, index[p], num_kpoints, num_freq, spin, cell_vec, k_vec, dE, mag_orbs, greenK, delta)
 
                 print('\n'.join('  '.join('{:.6f}'.format(item) for item in row) for row in exchange))
                 print('# ', central_atom, index[p,3], index[p,0], index[p,1], index[p,2], '{:.6f}'.format(np.trace(exchange)), 'eV') #for post-processing
