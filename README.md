@@ -10,7 +10,7 @@ where $m, m^{\prime},  n, n^{\prime}$ are orbital quantum numbers, $S$ is the sp
 **c++** version is implemented as cpp_modules, which requires [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) and [pybind11](https://pybind11.readthedocs.io/en/stable/advanced/pycpp/index.html#)  libraries during compilation via CMake:\
 mkdir build \
 cd build/ \
-cmake .. \
+cmake -DCMAKE_BUILD_TYPE=Releas .. (add Eigen and pybind11 path)\
 make 
 
 # Usage 
