@@ -192,14 +192,16 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, num_freq, spin
 
     loc_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
     corr_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
-    greenK_ij = np.zeros((mag_orbs[central_atom], mag_orbs[index_temp[3]]), dtype=np.complex128)
-    greenK_ji = np.zeros((mag_orbs[index_temp[3]], mag_orbs[central_atom]), dtype=np.complex128)
     exchange = np.zeros((mag_orbs[central_atom], mag_orbs[central_atom]))
 
     shift_i = np.sum(mag_orbs[:central_atom])
     shift_j = np.sum(mag_orbs[:index_temp[3]])
     
     r = index_temp[0] * cell_vec[0] + index_temp[1] * cell_vec[1] + index_temp[2] * cell_vec[2]
+    
+    phase = np.zeros((num_kpoints), dtype=np.complex128)
+    for e in range(num_kpoints):
+        phase[e] = np.exp( 1j * np.dot(k_vec[e],r) )
 
     for num in range(num_freq):
         delta_i = np.zeros((mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
@@ -216,10 +218,6 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, num_freq, spin
 
                 #Dyson  equation for correlated  Green's function
                 corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - np.diag(selfen[z, num, e]))
-           
-            # read the necessary block
-            greenK_ij[:mag_orbs[central_atom], :mag_orbs[index_temp[3]]] = corr_greenK[1, shift_i:mag_orbs[central_atom] + shift_i, shift_j:mag_orbs[index_temp[3]] + shift_j]
-            greenK_ji[:mag_orbs[index_temp[3]], :mag_orbs[central_atom]] = corr_greenK[0, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_i:mag_orbs[central_atom] + shift_i]
 
             delta_i[:mag_orbs[central_atom],:mag_orbs[central_atom]] += weight * (Ham_K[0, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] - 
             Ham_K[1, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] + np.diag(selfen[0, num, e, shift_i:mag_orbs[central_atom] + shift_i]) - np.diag(selfen[1, num, e, shift_i:mag_orbs[central_atom] + shift_i]))
@@ -227,9 +225,8 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, num_freq, spin
             delta_j[:mag_orbs[index_temp[3]],:mag_orbs[index_temp[3]]] += weight * (Ham_K[0, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] - 
             Ham_K[1, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] + np.diag(selfen[0, num, e, shift_j:mag_orbs[index_temp[3]] + shift_j]) - np.diag(selfen[1, num, e, shift_j:mag_orbs[index_temp[3]] + shift_j]))
 
-
-            greenR_ij += weight * np.exp( 1j * np.dot(k_vec[e],r) ) * greenK_ij
-            greenR_ji += weight * np.exp(-1j * np.dot(k_vec[e],r) ) * greenK_ji
+            greenR_ij += weight * phase[e] * corr_greenK[1, shift_i:mag_orbs[central_atom] + shift_i, shift_j:mag_orbs[index_temp[3]] + shift_j]
+            greenR_ji += weight * np.conj(phase[e]) * corr_greenK[0, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_i:mag_orbs[central_atom] + shift_i]
 
         dot_product = np.dot(np.dot(np.dot(delta_i, greenR_ij),delta_j),greenR_ji) 
 
@@ -246,7 +243,6 @@ def calc_occupation(central_atom, num_orb, num_kpoints, num_freq, Ham_K, selfen,
 
     loc_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
     corr_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
-    greenK_ii = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
     occ = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]))
 
     shift_i = mag_orbs[:central_atom].sum()
@@ -262,11 +258,8 @@ def calc_occupation(central_atom, num_orb, num_kpoints, num_freq, Ham_K, selfen,
 
                 #Dyson  equation for correlated  Green's function
                 corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - np.diag(selfen[z, num, e]))
-           
-            #read the necessary block
-            greenK_ii[:, :mag_orbs[central_atom], :mag_orbs[central_atom]] = corr_greenK[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
 
-            greenR_ii += weight * greenK_ii
+            greenR_ii += weight * corr_greenK[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
 
         occ -= (1 / np.pi) * (greenR_ii * dE[num]).imag
 
@@ -370,7 +363,7 @@ if __name__ == '__main__':
         print('{:.2f}'.format(positions[i,0]), '{:.2f}'.format(positions[i,1]), '{:.2f}'.format(positions[i,2]), mag_orbs[i])
 
     if(specific_true):
-        print('Exchange coupling will be calculated only between Atom',central_atom,'(000)<-->Atom', specific[3], "(" , specific[0] , specific[1] , specific[2], ').')
+        print('Exchange coupling will be calculated only between atom',central_atom,'(000)<-->atom', specific[3], "(" , specific[0] , specific[1] , specific[2], ').')
         print('To calculate exchange couplings between all atoms set <exchange_for_specific_atoms>: [0, 0, 0, 0] in <in.json> file')
 
     else:
@@ -394,7 +387,7 @@ if __name__ == '__main__':
             r[x] = specific[0] * cell_vec[0][x] + specific[1] * cell_vec[1][x] + specific[2] * cell_vec[2][x] + (positions[specific[3]][x] - positions[central_atom][x])
 
         print('=' * 69) 
-        print("Interaction of atom", central_atom, "(000)<-->atom", specific[0], "(", specific[1], specific[2], specific[3], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
+        print("Interaction of atom", central_atom, "(000)<-->atom", specific[3], "(", specific[0], specific[1], specific[2], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
 
         exchange = calc_exchange(central_atom, specific, num_orb, num_kpoints, num_freq, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs)
 

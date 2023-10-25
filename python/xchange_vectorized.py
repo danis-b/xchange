@@ -351,7 +351,7 @@ if __name__ == '__main__':
         print('{:.2f}'.format(positions[i,0]), '{:.2f}'.format(positions[i,1]), '{:.2f}'.format(positions[i,2]), mag_orbs[i])
 
     if(specific_true):
-        print('Exchange coupling will be calculated only between Atom',central_atom,'(000)<-->Atom', specific[3], "(" , specific[0] , specific[1] , specific[2], ').')
+        print('Exchange coupling will be calculated only between 1tom',central_atom,'(000)<-->1tom', specific[3], "(" , specific[0] , specific[1] , specific[2], ').')
         print('To calculate exchange couplings between all atoms set <exchange_for_specific_atoms>: [0, 0, 0, 0] in <in.json> file')
 
     else:
@@ -381,7 +381,7 @@ if __name__ == '__main__':
             r[x] = specific[0] * cell_vec[0][x] + specific[1] * cell_vec[1][x] + specific[2] * cell_vec[2][x] + (positions[specific[3]][x] - positions[central_atom][x])
 
         print('=' * 69)         
-        print("Interaction of atom", central_atom, "(000)<-->atom", specific[0], "(", specific[1], specific[2], specific[3], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
+        print("Interaction of atom", central_atom, "(000)<-->atom", specific[3], "(", specific[0], specific[1], specific[2], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
 
         exchange = calc_exchange(central_atom, specific, num_kpoints, num_freq, spin, cell_vec, k_vec, dE, mag_orbs, greenK, delta)
 
