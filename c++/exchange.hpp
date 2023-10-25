@@ -78,16 +78,14 @@ std::vector<double> calc_exchange(int central_atom,
             Eigen::MatrixXcd loc_greenK_up = (identity - Ham_K_up).inverse();
             Eigen::MatrixXcd loc_greenK_dn = (identity - Ham_K_dn).inverse();
 
-            greenR_ij += weight * phase[e] * loc_greenK_dn.block(shift_i, shift_j, mag_orbs[central_atom], mag_orbs[index_temp[3]]);
-            greenR_ji += weight * conj(phase[e]) * loc_greenK_up.block(shift_i, shift_j, mag_orbs[central_atom], mag_orbs[index_temp[3]]).transpose();
+            greenR_ij.noalias() += weight * phase[e] * loc_greenK_dn.block(shift_i, shift_j, mag_orbs[central_atom], mag_orbs[index_temp[3]]);
+            greenR_ji.noalias() += weight * conj(phase[e]) * loc_greenK_up.block(shift_i, shift_j, mag_orbs[central_atom], mag_orbs[index_temp[3]]).transpose();
 
-            delta_i += weight * (Ham_K_up.block(shift_i, shift_i, mag_orbs[central_atom], mag_orbs[central_atom]) - Ham_K_dn.block(shift_i, shift_i, mag_orbs[central_atom], mag_orbs[central_atom]));
-            delta_j += weight * (Ham_K_up.block(shift_j, shift_j, mag_orbs[index_temp[3]], mag_orbs[index_temp[3]]) - Ham_K_dn.block(shift_j, shift_j, mag_orbs[index_temp[3]], mag_orbs[index_temp[3]]));
+            delta_i.noalias() += weight * (Ham_K_up.block(shift_i, shift_i, mag_orbs[central_atom], mag_orbs[central_atom]) - Ham_K_dn.block(shift_i, shift_i, mag_orbs[central_atom], mag_orbs[central_atom]));
+            delta_j.noalias() += weight * (Ham_K_up.block(shift_j, shift_j, mag_orbs[index_temp[3]], mag_orbs[index_temp[3]]) - Ham_K_dn.block(shift_j, shift_j, mag_orbs[index_temp[3]], mag_orbs[index_temp[3]]));
         }
 
-        Eigen::MatrixXcd dot_product = delta_i * greenR_ij * delta_j * greenR_ji;
-
-        exchange_temp -= (dot_product * dE[num]).imag();
+        exchange_temp.noalias() -= (delta_i * greenR_ij * delta_j * greenR_ji * dE[num]).imag();
     }
 
     // Apply the scaling factor at the end

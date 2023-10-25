@@ -41,12 +41,12 @@ std::vector<double> calc_occupation(int central_atom,
             Eigen::MatrixXcd loc_greenK_up = (identity - Ham_K_up).inverse();
             Eigen::MatrixXcd loc_greenK_dn = (identity - Ham_K_dn).inverse();
 
-            greenR_ii_up += weight * loc_greenK_up.block(shift_i, shift_i, mag_orbs[central_atom], mag_orbs[central_atom]);
-            greenR_ii_dn += weight * loc_greenK_dn.block(shift_i, shift_i, mag_orbs[central_atom], mag_orbs[central_atom]);
+            greenR_ii_up.noalias() += weight * loc_greenK_up.block(shift_i, shift_i, mag_orbs[central_atom], mag_orbs[central_atom]);
+            greenR_ii_dn.noalias() += weight * loc_greenK_dn.block(shift_i, shift_i, mag_orbs[central_atom], mag_orbs[central_atom]);
         }
 
-        occupation_up -= (greenR_ii_up * dE[num]).imag();
-        occupation_dn -= (greenR_ii_dn * dE[num]).imag();
+        occupation_up.noalias() -= (greenR_ii_up * dE[num]).imag();
+        occupation_dn.noalias() -= (greenR_ii_dn * dE[num]).imag();
     }
 
     occupation_up *= (1.0 / M_PI);
