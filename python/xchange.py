@@ -302,17 +302,12 @@ if __name__ == '__main__':
         exit()
 
 
-    specific_true = False
-    for i in range(4):
-        if(specific[i] != 0):
-            specific_true = True
-            break
+    if(np.all(specific == 0)):
+        specific_true = False
+    else:
+        specific_true = True
 
-    if (specific[3] < 0 or specific[3] >= num_mag_atoms):
-        print('ERROR! <exchange_for_specific_atoms: [3]> must be in the range 0 <= input < ',num_mag_atoms)
-        exit()
-
-
+    num_specific_pairs =  specific.shape[0]
 
     k_vec = kmesh_preparation(cell_vec)
 
@@ -339,11 +334,16 @@ if __name__ == '__main__':
         print('{:.2f}'.format(positions[i,0]), '{:.2f}'.format(positions[i,1]), '{:.2f}'.format(positions[i,2]), mag_orbs[i])
 
     if(specific_true):
-        print('Exchange coupling will be calculated only between atom',central_atom,'(000)<-->atom', specific[3], "(" , specific[0] , specific[1] , specific[2], ').')
-        print('To calculate exchange couplings between all atoms set <exchange_for_specific_atoms>: [0, 0, 0, 0] in <in.json> file')
+        print('\n')
+        print('Exchange coupling will be calculated only between the following pairs:')
+        for i in range(num_specific_pairs):
+            print(central_atom,'(000)<-->', specific[i, 3], "(" , specific[i, 0] , specific[i, 1] , specific[i, 2], ')')
+
+        print('Set <exchange_for_specific_atoms>: [0, 0, 0, 0] to calculate for all of the pairs')
 
     else:
-        print('Exchange couplings will be calculated between all atoms around',central_atom)
+        print('\n')
+        print('Exchange couplings will be calculated between all pairs around',central_atom)
         print('within coordination spheres smaller than #',max_sphere_num)
     
     print('-' * 69)
@@ -355,22 +355,24 @@ if __name__ == '__main__':
  
 
     if(specific_true):
-        index_temp = np.zeros(4, dtype=int)
-        r = np.zeros(3) 
-        # specific[0] = i; specific[1] = j; specific[2] = k; specific[3] = atom2
 
-        for x in range(3):
-            r[x] = specific[0] * cell_vec[0][x] + specific[1] * cell_vec[1][x] + specific[2] * cell_vec[2][x] + (positions[specific[3]][x] - positions[central_atom][x])
+        for p in range(num_specific_pairs):
 
-        print('=' * 69) 
-        print("Interaction of atom", central_atom, "(000)<-->atom", specific[3], "(", specific[0], specific[1], specific[2], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
+            r = np.zeros(3) 
 
-        exchange = calc_exchange(central_atom, specific, num_orb, num_kpoints, num_freq, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs)
+            for x in range(3):
+                r[x] = specific[p, 0] * cell_vec[0][x] + specific[p, 1] * cell_vec[1][x] + specific[p, 2] * cell_vec[2][x] + (positions[specific[p, 3]][x] - positions[central_atom][x])
 
-        print('\n'.join('  '.join('{:.6f}'.format(item) for item in row) for row in exchange))
-        print('Trace equals to: ', '{:.6f}'.format(np.trace(exchange)), 'eV')
+            print('\n')
+            print("Interaction of atom", central_atom, "(000)<-->atom", specific[p,3], "(", specific[p,0], specific[p,1], specific[p,2], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
+
+            exchange = calc_exchange(central_atom, specific[p], num_orb, num_kpoints, num_freq, spin, cell_vec, k_vec, E, dE, Ham_K, mag_orbs)
+
+            print('\n'.join('  '.join('{:.6f}'.format(item) for item in row) for row in exchange))
+            print('# ', central_atom, specific[p,3], specific[p,0], specific[p,1], specific[p,2], '{:.6f}'.format(np.trace(exchange)), 'eV') #for post-processing
 
     else:
+
         num_points = num_mag_atoms * np.prod(n_size)
 
         radius, index = coordination_sort(central_atom, num_mag_atoms, n_min, n_max, cell_vec, positions)

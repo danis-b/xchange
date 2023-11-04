@@ -256,7 +256,7 @@ def calc_occupation(central_atom, num_kpoints, mag_orbs, dE, greenK):
 
 
 if __name__ == '__main__':
-    print("Program xchange.x v.4.0 (vectorized version) starts on  ", datetime.now())
+    print("Program xchange.x v.4.0 (vectorized version_test) starts on  ", datetime.now())
     print('=' * 69)
 
 
