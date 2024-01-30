@@ -14,7 +14,7 @@ cmake -DCMAKE_BUILD_TYPE=Releas .. (add Eigen and pybind11 path)\
 make 
 
 # Example 1 (square lattice)
-As an example we calculate exchange interactions in square lattice: 
+As an example we calculate exchange interactions in square lattice with nearest neighbor hopping $t = -0.1$ eV and Coulomb potential $U \simeq \Delta = 1$ eV. Here we approximate Coulomb potential with on-site splitting: 
 ![alt text](https://github.com/danis-b/xchange/blob/main/examples/square_lattice/DOS.png)
 
 in.json file contains the following information:
@@ -51,7 +51,7 @@ in.json file contains the following information:
 * e_fermi - (dfloat) Femi energy;
 * kmesh [3x1] (int) array - k-mesh for Brillouin zone integration; 
 
-Nearest neighbor hopping $t = -0.1$ eV and Coulomb potential $U \simeq \Delta = 1$ eV (we appoximate Coulomb potential with on-site potential) leads to  $J \sim$ 64.6 meV. In the limit of $\Delta \gg t$ exchange coupling can be estimated via $J = \frac{4t^2}{\Delta}$. You can make sure this increasing $\Delta$.  
+Resulting value of nearest neighbor exchange coupling $J \sim$ 64.6 meV.  In the limit of $\Delta \gg t$ exchange coupling can be estimated via analytical formula $J = \frac{4t^2}{\Delta}$. You can make sure this increasing on-site splitting $\Delta$ in spin_up.dat and spin_dn.dat files.  
 
 
 # Example 2 (BaMoP2O8)
