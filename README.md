@@ -51,7 +51,7 @@ in.json file contains the following information:
 * e_fermi - (dfloat) Femi energy;
 * kmesh [3x1] (int) array - k-mesh for Brillouin zone integration; 
 
-Nearest neighbor hopping $t = -0.1$ eV and Coulomb potential $U \simeq \Delta = 1$ eV (we appoximate Coulomb potential with on-site potential) leads to  $J^\prime \sim$ 64.6 meV. In the limit of $\Delta \gg t$ exchange coupling can be estimated via $J^\prime = \frac{4t^2}{\Delta}$. You can make sure this increasing $\Delta$.  
+Nearest neighbor hopping $t = -0.1$ eV and Coulomb potential $U \simeq \Delta = 1$ eV (we appoximate Coulomb potential with on-site potential) leads to  $J \sim$ 64.6 meV. In the limit of $\Delta \gg t$ exchange coupling can be estimated via $J = \frac{4t^2}{\Delta}$. You can make sure this increasing $\Delta$.  
 
 
 # Example 2 (BaMoP2O8)
