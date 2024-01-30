@@ -15,7 +15,7 @@ make
 
 # Usage 
 As an example let's calculate isotropic exchange interactions in BaMoP2O8 system [[Phys. Rev. B 98, 094406 (2018)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.98.094406)]. DFT+U electronic structure near Fermi level was parametrized by Wannier functions of one Mo(d) and eight O(p) orbitals (5 + 8 * 3 = 29 orbitals):
-![alt text](https://github.com/danis-b/xchange/blob/main/example/BANDS.png)
+![alt text](https://github.com/danis-b/xchange/blob/main/examples/BaMoPO/BANDS.png)
 
 in.json file contains the following information:
 
