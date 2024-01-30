@@ -337,7 +337,7 @@ if __name__ == '__main__':
         print('\n')
         print('Exchange coupling will be calculated only between the following pairs:')
         for i in range(num_specific_pairs):
-            print(central_atom,'(000)<-->', specific[i, 3], "(" , specific[i, 0] , specific[i, 1] , specific[i, 2], ')')
+            print(i, central_atom,'(000)<-->', specific[i, 3], "(" , specific[i, 0] , specific[i, 1] , specific[i, 2], ')')
 
         print('Set <exchange_for_specific_atoms>: [0, 0, 0, 0] to calculate for all of the pairs')
 
