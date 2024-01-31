@@ -13,6 +13,9 @@ cd build/ \
 cmake -DCMAKE_BUILD_TYPE=Releas .. (add Eigen and pybind11 path)\
 make 
 
+# Usage
+Run python xchange.py within directory with in.json together with hopping files spin_up.dat and spin_dn.dat from [wannier90](https://wannier.org).
+
 # Example 1 (square lattice)
 As an example we calculate exchange interactions in square lattice with nearest neighbor hopping $t = -0.1$ eV and Coulomb potential $U \simeq \Delta = 1$ eV. Here we approximate Coulomb potential with on-site splitting: 
 ![alt text](https://github.com/danis-b/xchange/blob/main/examples/square_lattice/DOS.png)
