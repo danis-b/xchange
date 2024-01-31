@@ -54,7 +54,7 @@ in.json file contains the following information:
 * e_fermi - (dfloat) Femi energy;
 * kmesh [3x1] (int) array - k-mesh for Brillouin zone integration; 
 
-Resulting value of nearest neighbor exchange coupling $J \sim$ 64.6 meV.  In the limit of $\Delta \gg t$ exchange coupling can be estimated via analytical formula $J = \frac{4t^2}{\Delta}$. You can make sure this increasing on-site splitting $\Delta$ in spin_up.dat and spin_dn.dat files.  
+Resulting value of nearest neighbor exchange coupling $J \sim$ 64.6 meV.  In the limit of $\Delta \gg t$ exchange coupling can be estimated via analytical formula $J = \frac{4t^2}{\Delta}$. You can make sure this increasing on-site splitting $\Delta$ in spin_up.dat and spin_dn.dat files (element 0 0 0 1 1).  
 
 
 # Example 2 (BaMoP2O8)
