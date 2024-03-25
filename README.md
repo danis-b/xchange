@@ -108,6 +108,7 @@ Atom 0 (000)<-->Atom 0 ( 0 1 0 ) with radius 4.8800  is # 1
 \end{pmatrix}
 ```
 \#  0 0 0 1 0 0.000157 eV
+
 ...
 
 Atom 0 (000)<-->Atom 0 ( 1 -1 0 ) with radius 5.2756  is # 1
