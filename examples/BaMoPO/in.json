@@ -5,7 +5,7 @@
    "central_atom": 0,
    "orbitals_of_magnetic_atoms":[5],
    "max_sphere_num": 3,
-   "exchange_for_specific_atoms": [0, 0, 0, 0],
+   "exchange_for_specific_atoms": [[0, 0, 0, 0]],
    "spin": 1,
    "ncol": 1000,
    "nrow": 500,
