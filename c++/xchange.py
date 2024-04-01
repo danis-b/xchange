@@ -9,7 +9,6 @@ from numba import jit
 
 import cpp_modules
 
-
 #https://triqs.github.io/tprf/latest/reference/python_reference.html#wannier90-tight-binding-parsers
 def parse_hopping_from_wannier90_hr_dat(filename):
 
@@ -70,8 +69,6 @@ def parse_hopping_from_wannier90_hr_dat(filename):
 
 
 
-
-
 @jit(nopython=True) 
 def kmesh_preparation(cell_vec):
     #reciprocal vectors and and kmesh for integration
@@ -87,7 +84,6 @@ def kmesh_preparation(cell_vec):
         for j in range(kmesh[1]):
             for k in range(kmesh[2]):
                 k_vec[idx] = (rec_vec[0] * i/ kmesh[0]) + (rec_vec[1] * j / kmesh[1]) + (rec_vec[2] * k / kmesh[2])
-
                 idx+=1
 
     return k_vec 
@@ -100,10 +96,10 @@ def energy_contour_preparation(ncol, nrow, e_fermi, e_low, smearing):
     num_freq = ncol + 2 * nrow
     de = complex((e_fermi - e_low) / ncol, smearing / nrow)
 
-    E = np.zeros(num_freq, dtype=np.complex128)
-    dE = np.zeros(num_freq, dtype=np.complex128)
-    e_const = complex(e_low, 0)
+    freq = np.zeros(num_freq, dtype=np.complex128)
+    d_freq = np.zeros(num_freq, dtype=np.complex128)
 
+    e_const = complex(e_low, 0)
     idx_x = 0
     idx_y = 1
 
@@ -120,17 +116,16 @@ def energy_contour_preparation(ncol, nrow, e_fermi, e_low, smearing):
             idx = 0
             e_const = complex(e_fermi, smearing)
         
-        E[i] = e_const + complex(idx * idx_x * (de).real, idx * idx_y * (de).imag)
-        dE[i] = complex(idx_x * (de).real, idx_y * (de).imag)
-        idx = idx+1
+        freq[i] = e_const + complex(idx * idx_x * (de).real, idx * idx_y * (de).imag)
+        d_freq[i] = complex(idx_x * (de).real, idx_y * (de).imag)
+        idx = idx + 1
 
-    return E, dE
+    return freq, d_freq
 
 
 
 def coordination_sort(central_atom, num_mag_atoms, n_min, n_max, cell_vec, positions):
     #This function sorts atoms depending on the radius from the central atom with index 'central_atom'
-
     n_size = n_max - n_min + 1  # Plus 1 for 0th
     num_points = num_mag_atoms * n_size.prod()
 
@@ -150,54 +145,52 @@ def coordination_sort(central_atom, num_mag_atoms, n_min, n_max, cell_vec, posit
 
 
 
-
 @jit(nopython=True) 
-def calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, Ham_R):
+def calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, ham_R):
     #Fourier transformation  of Hamiltonian
-    Ham_K = np.zeros((2, num_kpoints, num_orb, num_orb), dtype=np.complex128)
+    ham_K = np.zeros((2, num_kpoints, num_orb, num_orb), dtype=np.complex128)
 
-    for i in range(n_min[0], n_max[0]+1):
-        for j in range(n_min[1], n_max[1]+1):
-            for k in range(n_min[2], n_max[2]+1):
+    for i in range(n_min[0], n_max[0] + 1):
+        for j in range(n_min[1], n_max[1] + 1):
+            for k in range(n_min[2], n_max[2] + 1):
                 for z in range(2):
                     r = i * cell_vec[0] + j * cell_vec[1] + k * cell_vec[2]
                     dot_product = (k_vec @ r).reshape(num_kpoints, 1, 1)
                     phase = np.exp(-1j * dot_product)
-                    Ham_K[z] += phase * np.ascontiguousarray(Ham_R[z,i + n_max[0], j + n_max[1], k + n_max[2],:,:])
+                    ham_K[z] += phase * np.ascontiguousarray(ham_R[z, i + n_max[0], j + n_max[1], k + n_max[2], :, :])
 
-    return Ham_K
-
+    return ham_K
 
 
 
 if __name__ == '__main__':
-    print("Program xchange.x v.4.0 (cpp_modules) starts on  ", datetime.now())
+    print("Program xchange.x v.4.0 (python) starts on  ", datetime.now())
     print('=' * 69)
 
 
     hops_up, num_orb, n_min, n_max = parse_hopping_from_wannier90_hr_dat('spin_up.dat') 
     n_size = n_max - n_min + 1  # Plus 1 for 0th
 
-    Ham_R = np.zeros((2, *n_size, num_orb, num_orb), dtype='c16')
+    ham_R = np.zeros((2, *n_size, num_orb, num_orb), dtype='c16')
     
     for r in hops_up.keys():
         r_idx = np.array(r)
-        Ham_idx = hops_up.get(r)
+        ham_idx = hops_up.get(r)
         
         for m in range(num_orb):
             for n in range(num_orb):
-                Ham_R[0, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, n] = Ham_idx[m,n]
+                ham_R[0, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, n] = ham_idx[m, n]
 
     
     hops_dn, num_orb, n_min, n_max = parse_hopping_from_wannier90_hr_dat('spin_dn.dat') 
     
     for r in hops_dn.keys():
         r_idx = np.array(r)
-        Ham_idx = hops_dn.get(r)
+        ham_idx = hops_dn.get(r)
         
         for m in range(num_orb):
             for n in range(num_orb):
-                Ham_R[1, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, n] = Ham_idx[m,n]
+                ham_R[1, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, n] = ham_idx[m, n]
 
     # =======================================================================
     # Read information from input file in json format
@@ -222,23 +215,26 @@ if __name__ == '__main__':
 
     num_kpoints = np.prod(kmesh)
     num_freq = ncol + 2 * nrow
+    num_specific_pairs =  specific.shape[0]
 
 
-    if (central_atom < 0  or  central_atom >= num_mag_atoms):
-        print('ERROR! central_atom must be in the range 0 <= input < ', num_mag_atoms)
-        exit()
-
-
+    #check conditions
     if(np.all(specific == 0)):
         specific_true = False
     else:
         specific_true = True
 
-    num_specific_pairs =  specific.shape[0]
+    for i in range(num_specific_pairs):
+        if (specific[i, 3] < 0  or  specific[i, 3] >= num_mag_atoms):
+            print('ERROR! specific[:, 3] must be in the range 0 <= input < ', num_mag_atoms)
+            exit()
+
+    if (central_atom < 0  or  central_atom >= num_mag_atoms):
+        print('ERROR! central_atom must be in the range 0 <= input < ', num_mag_atoms)
+        exit()
 
     k_vec = kmesh_preparation(cell_vec)
-
-    E, dE  = energy_contour_preparation(ncol, nrow, e_fermi, e_low, smearing)
+    freq, d_freq  = energy_contour_preparation(ncol, nrow, e_fermi, e_low, smearing)
 
     #===============================================================================
     # print scanned data
@@ -264,9 +260,9 @@ if __name__ == '__main__':
         print('\n')
         print('Exchange coupling will be calculated only between the following pairs:')
         for i in range(num_specific_pairs):
-            print(central_atom,'(000)<-->', specific[i, 3], "(" , specific[i, 0] , specific[i, 1] , specific[i, 2], ')')
+            print(i, central_atom,'(000)<-->', specific[i, 3], "(" , specific[i, 0] , specific[i, 1] , specific[i, 2], ')')
 
-        print('Set <exchange_for_specific_atoms>: [0, 0, 0, 0] to calculate for all of the pairs')
+        print('Set <exchange_for_specific_atoms>: [[0, 0, 0, 0]] to calculate for all of the pairs')
 
     else:
         print('\n')
@@ -276,8 +272,7 @@ if __name__ == '__main__':
     print('-' * 69)
 
 
-    Ham_K = calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, Ham_R)
-
+    ham_K = calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, ham_R)
     print('Fourier transformation  of Hamiltonian is completed')
  
 
@@ -291,15 +286,16 @@ if __name__ == '__main__':
                 r[x] = specific[p, 0] * cell_vec[0][x] + specific[p, 1] * cell_vec[1][x] + specific[p, 2] * cell_vec[2][x] + (positions[specific[p, 3]][x] - positions[central_atom][x])
 
             print('\n')
-            print("Interaction of atom", central_atom, "(000)<-->atom", specific[p,3], "(", specific[p,0], specific[p,1], specific[p,2], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
+            print("Interaction of atom", central_atom, "(000)<-->atom", specific[p, 3], "(", specific[p, 0], specific[p, 1], specific[p, 2], ") in distance", '{:.4f}'.format(np.linalg.norm(r)))
 
-            exchange = cpp_modules.calc_exchange(central_atom, specific[p], num_orb, num_kpoints, num_freq, spin, cell_vec.reshape(9), k_vec.reshape(3 * num_kpoints),  Ham_K.reshape(2 * num_kpoints * num_orb * num_orb), E, dE, mag_orbs)
+            exchange = cpp_modules.calc_exchange(central_atom, specific[p], num_orb, num_kpoints, num_freq, spin, cell_vec.reshape(9), k_vec.reshape(3 * num_kpoints),  ham_K.reshape(2 * num_kpoints * num_orb * num_orb), freq, d_freq, mag_orbs)
             exchange = np.array(exchange).reshape(mag_orbs[central_atom], mag_orbs[central_atom])
 
             print('\n'.join('  '.join('{:.6f}'.format(item) for item in row) for row in exchange))
-            print('# ', central_atom, specific[p,3], specific[p,0], specific[p,1], specific[p,2], '{:.6f}'.format(np.trace(exchange)), 'eV') #for post-processing
+            print('# ', central_atom, specific[p, 3], specific[p, 0], specific[p, 1], specific[p, 2], '{:.6f}'.format(np.trace(exchange)), 'eV') #for post-processing
 
     else:
+
         num_points = num_mag_atoms * np.prod(n_size)
 
         radius, index = coordination_sort(central_atom, num_mag_atoms, n_min, n_max, cell_vec, positions)
@@ -311,9 +307,8 @@ if __name__ == '__main__':
         for p in range(num_points):
 
             if(p == 0):
-                occ = cpp_modules.calc_occupation(central_atom, num_orb, num_kpoints, num_freq, Ham_K.reshape(2 * num_kpoints * num_orb * num_orb), E, dE, mag_orbs)
+                occ = cpp_modules.calc_occupation(central_atom, num_orb, num_kpoints, num_freq, ham_K.reshape(2 * num_kpoints * num_orb * num_orb), freq, d_freq, mag_orbs)
                 occ = np.array(occ).reshape(2, mag_orbs[central_atom], mag_orbs[central_atom])
-
                 print('Occupation matrix (N_up - N_dn) for atom ', central_atom)
 
                 print('\n'.join('  '.join('{:.3f}'.format(item) for item in row) for row in (occ[0] - occ[1])))
@@ -330,15 +325,13 @@ if __name__ == '__main__':
                     break
 
                 print('\n')
-                print("Interaction of atom", central_atom, "(000)<-->atom", index[p,3], "(", index[p,0], index[p,1], index[p,2], ") in sphere", sphere_num ,"with radius", '{:.4f}'.format(radius[p]), " -- ", neighbor_num)
+                print("Interaction of atom", central_atom, "(000)<-->atom", index[p ,3], "(", index[p, 0], index[p,1], index[p, 2], ") in sphere", sphere_num ,"with radius", '{:.4f}'.format(radius[p]), " -- ", neighbor_num)
 
-                exchange = cpp_modules.calc_exchange(central_atom, index[p], num_orb, num_kpoints, num_freq, spin, cell_vec.reshape(9), k_vec.reshape(3 * num_kpoints),  Ham_K.reshape(2 * num_kpoints * num_orb * num_orb), E, dE, mag_orbs)
+                exchange = cpp_modules.calc_exchange(central_atom, index[p], num_orb, num_kpoints, num_freq, spin, cell_vec.reshape(9), k_vec.reshape(3 * num_kpoints),  ham_K.reshape(2 * num_kpoints * num_orb * num_orb), freq, d_freq, mag_orbs)
                 exchange = np.array(exchange).reshape(mag_orbs[central_atom], mag_orbs[central_atom])
 
                 print('\n'.join('  '.join('{:.6f}'.format(item) for item in row) for row in exchange))
-                print('# ', central_atom, index[p,3], index[p,0], index[p,1], index[p,2], '{:.6f}'.format(np.trace(exchange)), 'eV') #for post-processing
-
-
+                print('# ', central_atom, index[p, 3], index[p, 0], index[p, 1], index[p, 2], '{:.6f}'.format(np.trace(exchange)), 'eV') #for post-processing
 
     print('\n')
     print(f'This run was terminated on: {datetime.now()}')
