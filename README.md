@@ -30,7 +30,7 @@ in.json file contains the following information:
    "central_atom": 0,
    "orbitals_of_magnetic_atoms":[1],
    "max_sphere_num": 2,
-   "exchange_for_specific_atoms": [0, 0, 0, 0],
+   "exchange_for_specific_atoms": [[0, 0, 0, 0]],
    "spin": 0.5,
    "ncol": 1000,
    "nrow": 500,
@@ -39,13 +39,13 @@ in.json file contains the following information:
    "e_fermi": 0,
    "kmesh": [20, 20, 1]
 ```
-* cell_vectors - (3x3)(dfloat) array of unit cell vectors (in Ang);
+* cell_vectors - (3x3)(dfloat) matrix of unit cell vectors (in Ang);
 * number_of_magnetic_atoms - (int) number of magnetic atoms in unit cell;
-* positions_of_magnetic_atoms - (3 x number_of_magnetic_atoms)(dfloat) array of magnetic atoms positions in unit cell (in Ang);
+* positions_of_magnetic_atoms - (3 x number_of_magnetic_atoms)(dfloat) matrix of magnetic atoms positions in unit cell (in Ang);
 * central_atom - (int) atomic number of magnetic atom, for which we want to calculate exchange interactions (0 in our case);
 * orbitals_of_magnetic_atoms - (number_of_magnetic_atoms) (int) array of magnetic orbitals 
 * max_sphere_num - (int) maximum number of coordination sphere to calculate exchange couplings around central_atom. This number breaks the loop;
-* exchange_for_specific_atoms - (4)(int) array used for calculation of exchange couplings **only** between central_atom and atom given by element[3], connected  with radius-vector **R** = element[0] * **cell_vector1** + element[1] * **cell_vector2** + element[2] * **cell_vector3**. All zero elements [0,0,0,0] makes the program calculate all possible exchange interactions restricted by max_sphere_num; 
+* exchange_for_specific_atoms - (4 x required setups)(int) matrix used for calculation of exchange couplings **only** between central_atom and atom given by element[3], connected  with radius-vector **R** = element[0] * **cell_vector1** + element[1] * **cell_vector2** + element[2] * **cell_vector3**. All zero elements [0,0,0,0] makes the program calculate all possible exchange interactions restricted by max_sphere_num; 
 * spin - (int) spin number of the system;
 * ncol - (int) number of energy point for integration along real axis;
 * nrow - (int) number of energy point for integration along imaginary axis;  
@@ -73,7 +73,7 @@ in.json file in this case is the following:
    "central_atom": 0,
    "orbitals_of_magnetic_atoms":[5],
    "max_sphere_num": 3,
-   "exchange_for_specific_atoms": [0, 0, 0, 0],
+   "exchange_for_specific_atoms": [[0, 0, 0, 0]],
    "spin": 1,
    "ncol": 1000,
    "nrow": 500,
