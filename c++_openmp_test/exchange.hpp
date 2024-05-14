@@ -2,7 +2,6 @@
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
-#include <omp.h> 
 
 std::vector<double> calc_exchange(int central_atom,
                                   std::vector<int> &index_temp,
@@ -58,17 +57,8 @@ std::vector<double> calc_exchange(int central_atom,
     Eigen::MatrixXd exchange_temp = Eigen::MatrixXd::Zero(mag_orbs[central_atom], mag_orbs[central_atom]);
 
     int idx = num_kpoints * num_orb * num_orb;
-
-    #pragma omp parallel for reduction(+:exchange_temp)
     for (int num = 0; num < num_freq; ++num)
     {
-
-        #pragma omp single
-        {
-            int num_threads = omp_get_num_threads();
-            std::cout <<"Number of threads used: " << num_threads << std::endl;
-        }
-
         // Green's function in R-space
         Eigen::MatrixXcd greenR_ij = Eigen::MatrixXcd::Zero(mag_orbs[central_atom], mag_orbs[index_temp[3]]);
         Eigen::MatrixXcd greenR_ji = Eigen::MatrixXcd::Zero(mag_orbs[index_temp[3]], mag_orbs[central_atom]);

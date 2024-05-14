@@ -5,7 +5,6 @@
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 #include <pybind11/chrono.h>
-#include <omp.h> 
 
 #include "occupation.hpp" 
 #include "exchange.hpp" 

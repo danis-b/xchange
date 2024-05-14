@@ -67,7 +67,8 @@ def parse_hopping_from_wannier90_hr_dat(filename):
     return hopp_dict, num_wann, n_min, n_max
 
 
-def parse_self_energy_file(filename, ncol, nrow, num_orb, num_kpoints):
+@jit(nopython=True) 
+def parse_self_energy_file(filename, ncol, nrow, num_orb, num_kpoints, ham_K):
 
     with h5py.File(filename, "r") as f:
         data = np.asarray(f['data'])
@@ -76,12 +77,21 @@ def parse_self_energy_file(filename, ncol, nrow, num_orb, num_kpoints):
     for orbital_index in range(num_orb):
         mask = data[:, 1] == orbital_index + 1
         if np.any(mask):
-            selfen[orbital_index, :, :] =  1e-3 * (data[mask, 4] + 1j * data[mask, 5]).reshape(num_kpoints, ncol)
+            selfen[orbital_index, :, :] =  1e-3 * (data[mask, 4] + 1j * data[mask, 5]).reshape(num_kpoints, ncol) # from meV to eV
 
     selfen = np.transpose(selfen) 
-    selfen = np.pad(selfen, [(nrow, nrow), (0, 0), (0, 0)])
-    
-    return selfen
+
+    #new selfen in WF basis
+    selfen_transformed = np.zeros((ncol, num_kpoints, num_orb, num_orb), dtype=np.complex128)
+    for e in range(num_kpoints):
+        _ , evec = np.linalg.eigh(ham_K[e])
+        evec_herm = evec.conj().T
+
+        for num in range(ncol):
+            selfen_transformed[num, e] = np.matmul(evec_herm, np.matmul(np.diag(selfen[num, e]), evec))
+
+    selfen_transformed = np.pad(selfen_transformed, [(nrow, nrow), (0, 0), (0, 0), (0, 0)])
+    return selfen_transformed
 
 
 @jit(nopython=True) 
@@ -207,16 +217,21 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, num_freq, spin
         for  e in range(num_kpoints):
             for z in range(2):
                 #G = 1/(E - H)
-                loc_greenK[z] = np.linalg.inv(freq[num] * np.eye(num_orb) - ham_K[z,e] - np.diag(selfen[z, num, e]))
+                loc_greenK[z] = np.linalg.inv(freq[num] * np.eye(num_orb) - ham_K[z, e])
 
                 #Dyson  equation for correlated  Green's function
-                corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - np.diag(selfen[z, num, e]))
+                corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - selfen[z, num, e])
 
             delta_i[:mag_orbs[central_atom],:mag_orbs[central_atom]] += weight * (ham_K[0, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] - 
-            ham_K[1, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] + np.diag(selfen[0, num, e, shift_i:mag_orbs[central_atom] + shift_i]) - np.diag(selfen[1, num, e, shift_i:mag_orbs[central_atom] + shift_i]))
+            ham_K[1, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] + 
+            selfen[0, num, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i] - 
+            selfen[1, num, e, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i])
+            
 
             delta_j[:mag_orbs[index_temp[3]],:mag_orbs[index_temp[3]]] += weight * (ham_K[0, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] - 
-            ham_K[1, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] + np.diag(selfen[0, num, e, shift_j:mag_orbs[index_temp[3]] + shift_j]) - np.diag(selfen[1, num, e, shift_j:mag_orbs[index_temp[3]] + shift_j]))
+            ham_K[1, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] + 
+            selfen[0, num, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j] -
+            selfen[1, num, e, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_j:mag_orbs[index_temp[3]] + shift_j])
 
             greenR_ij += weight * phase[e] * corr_greenK[1, shift_i:mag_orbs[central_atom] + shift_i, shift_j:mag_orbs[index_temp[3]] + shift_j]
             greenR_ji += weight * np.conj(phase[e]) * corr_greenK[0, shift_j:mag_orbs[index_temp[3]] + shift_j, shift_i:mag_orbs[central_atom] + shift_i]
@@ -249,10 +264,10 @@ def calc_occupation(central_atom, num_orb, num_kpoints, num_freq, ham_K, selfen,
 
             for z in range(2):
                 #G = 1/(E - H)
-                loc_greenK[z] = np.linalg.inv(freq[num] * np.diag(np.ones(num_orb)) - ham_K[z,e]) 
+                loc_greenK[z] = np.linalg.inv(freq[num] * np.eye(num_orb) - ham_K[z,e]) 
 
                 #Dyson  equation for correlated  Green's function
-                corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - np.diag(selfen[z, num, e]))
+                corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - selfen[z, num, e])
 
             greenR_ii += weight * corr_greenK[:, shift_i:mag_orbs[central_atom] + shift_i, shift_i:mag_orbs[central_atom] + shift_i]
 
@@ -318,12 +333,6 @@ if __name__ == '__main__':
     num_freq = ncol + 2 * nrow
     num_specific_pairs =  specific.shape[0]
 
-    #self-energy
-    selfen_up = parse_self_energy_file('selfen_up.h5', ncol, nrow, num_orb, num_kpoints)
-    selfen_dn = parse_self_energy_file('selfen_dn.h5', ncol, nrow, num_orb, num_kpoints)
-    selfen = np.stack((selfen_up, selfen_dn)) #spin up and down
-
-
     #check conditions
     if(np.all(specific == 0)):
         specific_true = False
@@ -380,6 +389,12 @@ if __name__ == '__main__':
 
     ham_K = calc_hamK(num_orb, num_kpoints, n_min, n_max, cell_vec, k_vec, ham_R)
     print('Fourier transformation  of Hamiltonian is completed')
+
+
+    #self-energy from EPW read and convert to Wannier function basis 
+    selfen_up = parse_self_energy_file('selfen_up.h5', ncol, nrow, num_orb, num_kpoints, ham_K[0])
+    selfen_dn = parse_self_energy_file('selfen_dn.h5', ncol, nrow, num_orb, num_kpoints, ham_K[1])
+    selfen = np.stack((selfen_up, selfen_dn)) #spin up and down
  
 
     if(specific_true):
