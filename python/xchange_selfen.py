@@ -67,8 +67,20 @@ def parse_hopping_from_wannier90_hr_dat(filename):
     return hopp_dict, num_wann, n_min, n_max
 
 
-@jit(nopython=True) 
+
 def parse_self_energy_file(filename, ncol, nrow, num_orb, num_kpoints, ham_K):
+
+    #new selfen in WF basis
+    @jit(nopython=True) 
+    def selfen_transformation(num_kpoints, ncol, num_orb, ham_K, selfen):
+        selfen_transformed = np.zeros((ncol, num_kpoints, num_orb, num_orb), dtype=np.complex128)
+
+        for e in range(num_kpoints):
+            _ , evec = np.linalg.eigh(ham_K[e])
+            for num in range(ncol):
+                selfen_transformed[num, e] = np.dot(evec, np.dot(np.diag(selfen[num, e]), evec.conj().T))
+                
+        return selfen_transformed
 
     with h5py.File(filename, "r") as f:
         data = np.asarray(f['data'])
@@ -80,18 +92,11 @@ def parse_self_energy_file(filename, ncol, nrow, num_orb, num_kpoints, ham_K):
             selfen[orbital_index, :, :] =  1e-3 * (data[mask, 4] + 1j * data[mask, 5]).reshape(num_kpoints, ncol) # from meV to eV
 
     selfen = np.transpose(selfen) 
+    selfen_new = selfen_transformation(num_kpoints, ncol, num_orb, ham_K, selfen)
+    selfen_new = np.pad(selfen_new, [(nrow, nrow), (0, 0), (0, 0), (0, 0)])
 
-    #new selfen in WF basis
-    selfen_transformed = np.zeros((ncol, num_kpoints, num_orb, num_orb), dtype=np.complex128)
-    for e in range(num_kpoints):
-        _ , evec = np.linalg.eigh(ham_K[e])
-        evec_herm = evec.conj().T
+    return selfen_new
 
-        for num in range(ncol):
-            selfen_transformed[num, e] = np.matmul(evec_herm, np.matmul(np.diag(selfen[num, e]), evec))
-
-    selfen_transformed = np.pad(selfen_transformed, [(nrow, nrow), (0, 0), (0, 0), (0, 0)])
-    return selfen_transformed
 
 
 @jit(nopython=True) 
@@ -214,7 +219,7 @@ def calc_exchange(central_atom, index_temp, num_orb, num_kpoints, num_freq, spin
         greenR_ij = np.zeros((mag_orbs[central_atom], mag_orbs[index_temp[3]]), dtype=np.complex128)
         greenR_ji = np.zeros((mag_orbs[index_temp[3]], mag_orbs[central_atom]), dtype=np.complex128)
 
-        for  e in range(num_kpoints):
+        for e in range(num_kpoints):
             for z in range(2):
                 #G = 1/(E - H)
                 loc_greenK[z] = np.linalg.inv(freq[num] * np.eye(num_orb) - ham_K[z, e])
@@ -260,12 +265,12 @@ def calc_occupation(central_atom, num_orb, num_kpoints, num_freq, ham_K, selfen,
         corr_greenK = np.zeros((2,num_orb, num_orb), dtype=np.complex128)
         greenR_ii = np.zeros((2, mag_orbs[central_atom], mag_orbs[central_atom]), dtype=np.complex128)
 
-        for  e in range(num_kpoints):
+        for e in range(num_kpoints):
 
             for z in range(2):
                 #G = 1/(E - H)
-                loc_greenK[z] = np.linalg.inv(freq[num] * np.eye(num_orb) - ham_K[z,e]) 
-
+                loc_greenK[z] = np.linalg.inv(freq[num] * np.eye(num_orb) - ham_K[z, e]) 
+                
                 #Dyson  equation for correlated  Green's function
                 corr_greenK[z] = np.linalg.inv(np.linalg.inv(loc_greenK[z]) - selfen[z, num, e])
 
@@ -285,28 +290,8 @@ if __name__ == '__main__':
 
 
     hops_up, num_orb, n_min, n_max = parse_hopping_from_wannier90_hr_dat('spin_up.dat') 
+    hops_dn, _, _, _ = parse_hopping_from_wannier90_hr_dat('spin_dn.dat') 
     n_size = n_max - n_min + 1  # Plus 1 for 0th
-
-    ham_R = np.zeros((2, *n_size, num_orb, num_orb), dtype='c16')
-    
-    for r in hops_up.keys():
-        r_idx = np.array(r)
-        ham_idx = hops_up.get(r)
-        
-        for m in range(num_orb):
-            for n in range(num_orb):
-                ham_R[0, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, n] = ham_idx[m, n]
-
-    
-    hops_dn, num_orb, n_min, n_max = parse_hopping_from_wannier90_hr_dat('spin_dn.dat') 
-    
-    for r in hops_dn.keys():
-        r_idx = np.array(r)
-        ham_idx = hops_dn.get(r)
-        
-        for m in range(num_orb):
-            for n in range(num_orb):
-                ham_R[1, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, n] = ham_idx[m, n]
 
     # =======================================================================
     # Read information from input file in json format
@@ -348,7 +333,35 @@ if __name__ == '__main__':
         print('ERROR! central_atom must be in the range 0 <= input < ', num_mag_atoms)
         exit()
 
+
+    ham_R = np.zeros((2, *n_size, num_orb, num_orb), dtype='c16')
+    
+    for r in hops_up.keys():
+        r_idx = np.array(r)
+        ham_idx = hops_up.get(r)
+        
+        for m in range(num_orb):
+            for n in range(num_orb):
+                ham_R[0, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, n] = ham_idx[m, n]
+            
+            if(r_idx[0] == 0 and r_idx[1] == 0 and r_idx[2] == 0):
+                ham_R[0, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, m] -= e_fermi
+
+    
+    for r in hops_dn.keys():
+        r_idx = np.array(r)
+        ham_idx = hops_dn.get(r)
+        
+        for m in range(num_orb):
+            for n in range(num_orb):
+                ham_R[1, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, n] = ham_idx[m, n]
+            
+            if(r_idx[0] == 0 and r_idx[1] == 0 and r_idx[2] == 0):
+                ham_R[1, r_idx[0] + n_max[0], r_idx[1] + n_max[1], r_idx[2] + n_max[2], m, m] -= e_fermi
+
+
     k_vec = kmesh_preparation(cell_vec)
+    e_fermi = 0 # redefine Fermi energy according to to elph selfen definition 
     freq, d_freq  = energy_contour_preparation(ncol, nrow, e_fermi, e_low, smearing)
 
     #===============================================================================
