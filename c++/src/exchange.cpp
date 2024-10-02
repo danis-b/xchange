@@ -1,7 +1,4 @@
-#include <complex>
-#include <iostream>
-#include <vector>
-#include <Eigen/Dense>
+#include "../include/exchange.hpp"
 
 std::vector<double> calc_exchange(int central_atom,
                                   std::vector<int> &index_temp,
@@ -40,7 +37,7 @@ std::vector<double> calc_exchange(int central_atom,
     }
 
     // phases for all k-points
-    std::vector<std::complex<double> > phase(num_kpoints);
+    std::vector<std::complex<double>> phase(num_kpoints);
     for (int e = 0; e < num_kpoints; ++e)
     {
         double r_dot_k = 0;
@@ -52,7 +49,6 @@ std::vector<double> calc_exchange(int central_atom,
 
         phase[e] = std::exp(cplx_i * r_dot_k);
     }
-
 
     Eigen::MatrixXd exchange_temp = Eigen::MatrixXd::Zero(mag_orbs[central_atom], mag_orbs[central_atom]);
 
@@ -90,7 +86,6 @@ std::vector<double> calc_exchange(int central_atom,
 
     // Apply the scaling factor at the end
     exchange_temp *= 1 / (2 * M_PI * spin * spin);
-
 
     std::vector<double> exchange;
     exchange.reserve(mag_orbs[central_atom] * mag_orbs[central_atom]);

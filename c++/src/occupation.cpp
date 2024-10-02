@@ -1,7 +1,4 @@
-#include <complex>
-#include <iostream>
-#include <vector>
-#include <Eigen/Dense>
+#include "../include/occupation.hpp"
 
 std::vector<double> calc_occupation(int central_atom,
                                     int num_orb,
@@ -52,7 +49,6 @@ std::vector<double> calc_occupation(int central_atom,
     occupation_up *= (1.0 / M_PI);
     occupation_dn *= (1.0 / M_PI);
 
-
     std::vector<double> occ;
     occ.reserve(2 * mag_orbs[central_atom] * mag_orbs[central_atom]);
 
@@ -64,7 +60,6 @@ std::vector<double> calc_occupation(int central_atom,
         }
     }
 
-
     for (int i = 0; i < mag_orbs[central_atom]; i++)
     {
         for (int j = 0; j < mag_orbs[central_atom]; j++)
@@ -72,8 +67,6 @@ std::vector<double> calc_occupation(int central_atom,
             occ.push_back(occupation_dn(i, j));
         }
     }
-
-
 
     return occ;
 }

@@ -6,8 +6,22 @@ from datetime import datetime
 
 import numpy as np
 from numba import jit
+import sys
+import os
 
-import cpp_modules
+module_directory = "build/"
+module_directory = os.path.abspath(module_directory)
+
+if module_directory not in sys.path:
+    sys.path.append(module_directory)
+
+try:
+    import cpp_modules
+    print("c++ module 'cpp_modules' was loaded successfully!")
+except ImportError:
+    print("c++ module 'cpp_modules' not found in the build directory!")
+
+
 
 #https://triqs.github.io/tprf/latest/reference/python_reference.html#wannier90-tight-binding-parsers
 def parse_hopping_from_wannier90_hr_dat(filename):
